@@ -1,0 +1,3 @@
+[submodule "voice-activated-kiosk-ui"]
+	path = voice-activated-kiosk-ui
+	url = https://github.com/ne0ekspert/voice-activated-kiosk-ui
