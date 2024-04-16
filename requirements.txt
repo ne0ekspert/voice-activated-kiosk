@@ -1,0 +1,5 @@
+aiohttp
+gtts
+playsound==1.2.2
+google-cloud-aiplatform
+SpeechRecognition
