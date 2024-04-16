@@ -6,8 +6,10 @@ from vertexai.language_models import TextGenerationModel
 import speech_recognition as sr
 from aiohttp import web
 import asyncio
+import pynfc
 
 vertexai.init(project="gemini-test-415008", location="us-central1")
+n = pynfc.Nfc("pn532_i2c:/dev/i2c-1")
 
 async def handler(request):
     ws = web.WebSocketResponse()
@@ -110,4 +112,13 @@ output: """, **parameters)
             except sr.RequestError as e:
                 print(f"Could not request results from Google Speech Recognition service; {e}")
     
+    async def tag():
+        while True:
+            for target in n.poll():
+                try:
+                    await ws.send_str(target.uid)
+                except pynfc.TimeoutException:
+                    pass
+
     asyncio.create_task(recognition())
+    asyncio.create_task(tag())
