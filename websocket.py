@@ -116,7 +116,7 @@ output: """, **parameters)
         while True:
             for target in n.poll():
                 try:
-                    await ws.send_str(target.uid)
+                    await ws.send_str(target.uid.hex())
                 except pynfc.TimeoutException:
                     pass
 
