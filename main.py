@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 from aiohttp import web
 from websocket import ws_voice, ws_prod, ws_nfc
@@ -12,7 +13,7 @@ if not Path('voice-activated-kiosk-ui/build').is_dir():
     os.chdir("..")
 
 app = web.Application()
-
+logging.basicConfig(level=logging.DEBUG)
 async def index(request):
     return web.FileResponse('voice-activated-kiosk-ui/build/index.html')
 async def manifest(request):
