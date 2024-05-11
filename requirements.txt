@@ -1,5 +1,7 @@
 aiohttp
 gtts
 playsound==1.2.2
+pyaudio
 google-cloud-aiplatform
 SpeechRecognition
+pynfc
