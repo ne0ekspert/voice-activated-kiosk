@@ -16,12 +16,9 @@ app = web.Application()
 logging.basicConfig(level=logging.DEBUG)
 async def index(request):
     return web.FileResponse('voice-activated-kiosk-ui/build/index.html')
-async def manifest(request):
-    return web.FileResponse('voice-activated-kiosk-ui/build/manifest.json')
 
 app.router.add_static('/static/', 'voice-activated-kiosk-ui/build/static/', name='static')
 app.router.add_get('/', index)
-app.router.add_get('/manifest.json', manifest)
 app.router.add_get('/ws/voice', ws_voice)
 app.router.add_get('/ws/prod', ws_prod)
 app.router.add_get('/ws/nfc', ws_nfc)
