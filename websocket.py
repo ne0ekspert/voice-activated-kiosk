@@ -5,6 +5,7 @@ import vertexai
 from vertexai.language_models import TextGenerationModel
 import speech_recognition as sr
 from aiohttp import web
+import threading
 import asyncio
 import json
 
@@ -45,7 +46,6 @@ async def ws_voice(request):
     print(ws.status)
 
     async def listen_async(r):
-        import threading
         result_future = asyncio.Future()
         def threaded_listen():
             with sr.Microphone() as s:
@@ -172,17 +172,27 @@ async def ws_nfc(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
 
-    while not ws.closed:
-        if n is None:
-            await ws.ping()
-
-            await asyncio.sleep(5)
-        else:
-            for target in n.poll():
-                try:
-                    await ws.send_str(target.uid.hex())
+    async def read_tag_async():
+        result_future = asyncio.Future()
+        def threaded_read_tag():
+            try:
+                for target in n.poll():
+                    ws._loop.call_soon_threadsafe(result_future.set_result, target)
                     break
-                except pynfc.TimeoutException:
-                    pass
+            except Exception as e:
+                ws._loop.call_soon_threadsafe(result_future.set_exception, e)
+
+        read_tag_thread = threading.Thread(target=threaded_read_tag)
+        read_tag_thread.daemon = True
+        read_tag_thread.start()
+
+        return await result_future
+
+    while not ws.closed:
+        try:
+            target = await read_tag_async()
+            ws.send_str(target.uid.hex())
+        except:
+            pass
 
     return ws
