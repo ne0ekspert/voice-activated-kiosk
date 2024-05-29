@@ -64,24 +64,24 @@ async def ws_voice(request):
         # Create an instance of the Recognizer class
         r = sr.Recognizer()
 
+        await ws.send_str('!!!')
         audio = await listen_async(r)
 
         # Recognize speech using Google Speech Recognition
         text: str = ""
         try:
+            await ws.send_str('...')
             print("Recognizing...")
             text = r.recognize_google(audio, language='ko-KR')
             print(f"You said: {text}")
-            await ws.send_str(text)
 
         except sr.UnknownValueError:
             print("Google Speech Recognition could not understand audio")
-            await ws.send_str("***")
+            await ws.send_str("???")
 
         except sr.RequestError as e:
             print(f"Could not request results from Google Speech Recognition service; {e}")
             await ws.send_str(f"Error: {e}")
-
 
         if text != "":
             def getPriceByName(name):
@@ -98,16 +98,12 @@ async def ws_voice(request):
                 )
             )
             cart_text = '\n'.join(
-                map(lambda x: f"[{x['id']}] {x['name']} {x['count']}개: {getPriceByName(x['name']) * x['count']}",
+                map(lambda x: f"[{x['id']}] {x['name']} {x['count']}개: {getPriceByName(x['name']) * int(x['count'])}",
                     cart
                 )
             )
 
-            input_text = f"""주문을 받는 AI로 역할
-사용 가능한 기능: 음성 인식
-주문을 받고 다음 포맷으로 정리: <품명ID:수량>
-결제 방식은 다음 포맷으로 정리: <payment:card> <payment:cash>
-친근한 대화체로 대답
+            input_text = f"""당신은 음성 인식으로 주문을 받는 AI입니다. 주문을 추가할 때는 <음식명:수량>처럼 <참치김밥:2>같이 추가하고 취소할 때는 <!ID>를 입력합니다.
 
 주문 가능한 품목
 {products_text}
@@ -160,10 +156,22 @@ output: """
 
             speech = response.text.split("## 대답")[1]
 
+            async def async_play(path):
+                result_future = asyncio.Future()
+
+                def threaded_play(path):
+                    playsound(path)
+                    ws._loop.call_soon_threadsafe(result_future.set_result, 0)
+
+                play_thread = threading.Thread(target=threaded_play, args=(path,), daemon=True)
+                play_thread.start()
+
+                return await result_future
+
             print("Voice output process...")
             tts = gTTS(speech, lang='ko')
             tts.save("temp.mp3")
-            playsound("temp.mp3")
+            await async_play("temp.mp3")
             os.remove("temp.mp3")
 
     return ws
@@ -182,8 +190,7 @@ async def ws_nfc(request):
             except Exception as e:
                 ws._loop.call_soon_threadsafe(result_future.set_exception, e)
 
-        read_tag_thread = threading.Thread(target=threaded_read_tag)
-        read_tag_thread.daemon = True
+        read_tag_thread = threading.Thread(target=threaded_read_tag, daemon=True)
         read_tag_thread.start()
 
         return await result_future
