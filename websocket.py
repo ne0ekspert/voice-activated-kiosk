@@ -21,6 +21,11 @@ except:
 cart = []
 products = []
 
+with open('prompts/context.txt') as f:
+    prompt_context = f.read()
+with open('prompts/examples.txt') as f:
+    prompt_examples = f.read()
+
 async def ws_prod(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -103,7 +108,7 @@ async def ws_voice(request):
                 )
             )
 
-            input_text = f"""당신은 음성 인식으로 주문을 받는 AI입니다. 주문을 추가할 때는 <음식명:수량>처럼 <참치김밥:2>같이 추가하고 취소할 때는 <!ID>를 입력합니다.
+            input_text = f"""{prompt_context}
 
 주문 가능한 품목
 {products_text}
@@ -112,28 +117,7 @@ async def ws_voice(request):
 {cart_text}
 ---
 
-input: 카드로 결제할게요
-output: <payment:card>
-## 대답
-카드를 리더기에 터치해주세요.
-<|end|>
-
-input: 진라면 100개
-output: <진라면:100>
-## 대답
-진라면 100개를 목록에 추가했습니다!
-<|end|>
-
-input: 만두 라면 주문 취소
-output: <!e227020f-dee9-4633-b1ef-7c47ed85e396>
-## 대답
-만두 라면을 주문 목록에서 삭제하였습니다.
-
-input: 현금 결제로 할게요
-output: <payment:cash>
-## 대답
-음식이 나올 때 카운터에서 결제해주세요.
-<|end|>
+{prompt_examples}
 
 input: {text}
 output: """
