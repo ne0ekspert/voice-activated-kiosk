@@ -2,44 +2,44 @@ import os
 from playsound import playsound
 from gtts import gTTS
 import vertexai
-from vertexai.language_models import TextGenerationModel
+from vertexai.generative_models import GenerativeModel
 import speech_recognition as sr
 from aiohttp import web
 import threading
 import asyncio
 import json
+from product import cart, product
+from rag_tools import retail_tool, rag_run_function
 
 vertexai.init(project="gemini-test-415008", location="us-central1")
-model = TextGenerationModel.from_pretrained("text-bison")
+model = GenerativeModel(
+    "gemini-1.5-pro-001",
+    tools=[retail_tool]
+)
 
 try:
     import pynfc
     n = pynfc.Nfc("pn532_i2c:/dev/i2c-1")
 except:
+    print("due to PyNFC initialization failure we will disable NFC")
     n = None
 
-cart = []
-products = []
-
-with open('prompts/context.txt') as f:
-    prompt_context = f.read()
-with open('prompts/examples.txt') as f:
-    prompt_examples = f.read()
+chat = model.start_chat()
 
 async def ws_prod(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
 
     async for msg in ws:
-        global cart, products
+        global cart, product
 
         if msg.type == web.WSMsgType.TEXT:
             if msg.data.startswith("cart:"):
-                cart = json.loads(msg.data[5:])
+                cart.items = json.loads(msg.data[5:])
                 print(f"Cart data updated: {cart}")
             elif msg.data.startswith("prod:"):
-                products = json.loads(msg.data[5:])
-                print(f"Products updated: {products}")
+                product.items = json.loads(msg.data[5:])
+                print(f"Products updated: {product}")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
 
@@ -89,56 +89,18 @@ async def ws_voice(request):
             await ws.send_str(f"Error: {e}")
 
         if text != "":
-            def getPriceByName(name):
-                product = list(filter(lambda p: p['name'] == name, products))[0]
-                price = int(product['price'])
-
-                return price
-            
             await ws.send_str(f"INPUT:{text}")
             # Process the recognized speech using the model and send the response
-            products_text = '\n'.join(
-                map(lambda x: f"{x['name']}: {x['price']}원",
-                    products
+            response = chat.send_message(text)
+            for part in response.candidates[0].content.parts:
+                chat.send_message(
+                    rag_run_function(part)
                 )
-            )
-            cart_text = '\n'.join(
-                map(lambda x: f"[{x['id']}] {x['name']} {x['count']}개: {getPriceByName(x['name']) * int(x['count'])}",
-                    cart
-                )
-            )
-
-            input_text = f"""{prompt_context}
-
-주문 가능한 품목
-{products_text}
----
-주문한 품목
-{cart_text}
----
-
-{prompt_examples}
-
-input: {text}
-output: """
-            parameters = {
-                "candidate_count": 1,
-                "max_output_tokens": 1024,
-                "stop_sequences": [
-                    "<|end|>"
-                ],
-                "temperature": 0.9,
-                "top_p": 1
-            }
-            response = model.predict(input_text, **parameters)
-            print(input_text)
             print(f"Response from Model: {response.text}")
-            await ws.send_str(f'RES:{response.text}')
+            await ws.send_str(f'RES:{output}')
 
-            if "## 대답" not in response.text:
-                continue
 
-            speech = response.text.split("## 대답")[1]
+            speech = response.text
 
             async def async_play(path):
                 result_future = asyncio.Future()
