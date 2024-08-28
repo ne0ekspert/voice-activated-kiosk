@@ -55,6 +55,8 @@ async def ws_voice(request):
         def threaded_listen():
             with sr.Microphone() as s:
                 try:
+                    print('adjusting... (1s)')
+                    r.adjust_for_ambient_noise(source, duration=1)
                     print('listening...')
                     audio = r.listen(s)
                     ws._loop.call_soon_threadsafe(result_future.set_result, audio)
@@ -66,13 +68,6 @@ async def ws_voice(request):
         return await result_future
     
     r = sr.Recognizer()
-    r.energy_threshold = 4000  
-    r.dynamic_energy_threshold = True
-
-    with sr.Microphone() as source:
-        print("Please wait. Calibrating microphone...")
-        # listen for 5 seconds and calculate the ambient noise energy level   
-        r.adjust_for_ambient_noise(source, duration=5)
 
     while not ws.closed:
         await ws.send_str('!!!')
