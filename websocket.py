@@ -64,11 +64,15 @@ async def ws_voice(request):
         listener_thread.daemon = True
         listener_thread.start()
         return await result_future
+    
+    r = sr.Recognizer()
+
+    with sr.Microphone() as source:
+        print("Please wait. Calibrating microphone...")
+        # listen for 5 seconds and calculate the ambient noise energy level   
+        r.adjust_for_ambient_noise(source, duration=5)
 
     while not ws.closed:
-        # Create an instance of the Recognizer class
-        r = sr.Recognizer()
-
         await ws.send_str('!!!')
         audio = await listen_async(r)
 
