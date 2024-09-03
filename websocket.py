@@ -4,13 +4,33 @@ from gtts import gTTS
 import vertexai
 from vertexai.language_models import TextGenerationModel
 import speech_recognition as sr
+from google.cloud import speech
+from gcloud_stt import ResumableMicrophoneStream
 from aiohttp import web
 import threading
+import logging
 import asyncio
 import json
 
+logger = logging.Logger(__name__)
+
 vertexai.init(project="gemini-test-415008", location="us-central1")
 model = TextGenerationModel.from_pretrained("text-bison")
+
+SAMPLE_RATE = 48000
+client = speech.SpeechClient()
+config = speech.RecognitionConfig(
+    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+    sample_rate_hertz=SAMPLE_RATE,
+    language_code="ko-KR",
+    enable_automatic_punctuation=True,
+    model="latest_short",
+    max_alternatives=1,
+)
+
+streaming_config = speech.StreamingRecognitionConfig(
+    config=config, interim_results=True
+)
 
 try:
     import pynfc
@@ -50,53 +70,78 @@ async def ws_voice(request):
     await ws.prepare(request)
     print(ws.status)
 
-    async def listen_async(r):
+    async def transcribe_async():
         result_future = asyncio.Future()
 
-        def threaded_listen():
-            with sr.Microphone() as s:
-                try:
-                    print('listening...')
-                    audio = r.listen(s, timeout=2)
-                    ws._loop.call_soon_threadsafe(result_future.set_result, audio)
-                except Exception as e:
-                    ws._loop.call_soon_threadsafe(result_future.set_exception, e)
-        listener_thread = threading.Thread(target=threaded_listen)
+        def threaded_listen_middle():
+            async def threaded_listen():
+                mic_manager = ResumableMicrophoneStream(48000, SAMPLE_RATE // 10)
+
+                await ws.send_str('!!!')
+                
+                with mic_manager as stream:
+                    while not stream.closed:
+                        stream.audio_input = []
+                        audio_generator = stream.generator()
+
+                        requests = (
+                            speech.StreamingRecognizeRequest(audio_content=content)
+                            for content in audio_generator
+                        )
+
+                        responses = client.streaming_recognize(streaming_config, requests)
+
+                        for response in responses:
+                            if not response.results:
+                                continue
+
+                            result = response.results[0]
+
+                            if not result.alternatives:
+                                continue
+
+                            transcript = result.alternatives[0].transcript
+
+                            logger.warning(transcript)
+
+                            await ws.send_str('INPUT:'+transcript)
+
+                            if result.is_final:
+                                ws._loop.call_soon_threadsafe(result_future.set_result, transcript)
+
+                """
+                with sr.Microphone() as s:
+                    try:
+                        print('listening...')
+                        audio = r.listen(s, timeout=2)
+                        ws._loop.call_soon_threadsafe(result_future.set_result, audio)
+                    except Exception as e:
+                        ws._loop.call_soon_threadsafe(result_future.set_exception, e)
+                """
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            loop.run_until_complete(threaded_listen())
+            loop.close()
+
+        listener_thread = threading.Thread(target=threaded_listen_middle)
         listener_thread.daemon = True
         listener_thread.start()
+
         return await result_future
-    
-    r = sr.Recognizer()
-    r.energy_threshold = 40
 
     while not ws.closed:
-        await ws.send_str('!!!')
-        audio = await listen_async(r)
-
-        # Recognize speech using Google Speech Recognition
-        text: str = ""
-        try:
-            await ws.send_str('...')
-            print("Recognizing...")
-            text = r.recognize_google(audio, language='ko-KR')
-            print(f"You said: {text}")
-
-        except sr.UnknownValueError:
-            print("Google Speech Recognition could not understand audio")
-            await ws.send_str("???")
-
-        except sr.RequestError as e:
-            print(f"Could not request results from Google Speech Recognition service; {e}")
-            await ws.send_str(f"Error: {e}")
+        text: str = await transcribe_async()
 
         if text != "":
+            await ws.send_str('...')
+            
             def getPriceByName(name):
                 product = list(filter(lambda p: p['name'] == name, products))[0]
                 price = int(product['price'])
 
                 return price
             
-            await ws.send_str(f"INPUT:{text}")
             # Process the recognized speech using the model and send the response
             products_text = '\n'.join(
                 map(lambda x: f"{x['name']}: {x['price']}원",
