@@ -52,13 +52,12 @@ async def ws_voice(request):
 
     async def listen_async(r):
         result_future = asyncio.Future()
+
         def threaded_listen():
             with sr.Microphone() as s:
                 try:
-                    print('adjusting... (1s)')
-                    r.adjust_for_ambient_noise(source, duration=1)
                     print('listening...')
-                    audio = r.listen(s)
+                    audio = r.listen(s, timeout=2)
                     ws._loop.call_soon_threadsafe(result_future.set_result, audio)
                 except Exception as e:
                     ws._loop.call_soon_threadsafe(result_future.set_exception, e)
@@ -68,6 +67,7 @@ async def ws_voice(request):
         return await result_future
     
     r = sr.Recognizer()
+    r.energy_threshold = 40
 
     while not ws.closed:
         await ws.send_str('!!!')
@@ -139,7 +139,7 @@ output: """
             if "## 대답" not in response.text:
                 continue
 
-            speech = response.text.split("## 대답")[1]
+            response_text = response.text.split("## 대답")[1]
 
             async def async_play(path):
                 result_future = asyncio.Future()
@@ -154,7 +154,7 @@ output: """
                 return await result_future
 
             print("Voice output process...")
-            tts = gTTS(speech, lang='ko')
+            tts = gTTS(response_text, lang='ko')
             tts.save("temp.mp3")
             await async_play("temp.mp3")
             os.remove("temp.mp3")
