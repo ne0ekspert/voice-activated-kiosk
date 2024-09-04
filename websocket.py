@@ -1,21 +1,21 @@
 import os
+import json
+import asyncio
+import logging
+import threading
 from playsound import playsound
 from gtts import gTTS
-import vertexai
-from vertexai.language_models import TextGenerationModel
-import speech_recognition as sr
 from google.cloud import speech
 from gcloud_stt import ResumableMicrophoneStream
+from langchain import OpenAI
+from langchain.tools import Tool
+from langchain.agents import initialize_agent, AgetnType
+from langchain.schema import SystemMessage, HumanMessage, AIMessage, ChatMessage
 from aiohttp import web
-import threading
-import logging
-import asyncio
-import json
 
 logger = logging.Logger(__name__)
 
-vertexai.init(project="gemini-test-415008", location="us-central1")
-model = TextGenerationModel.from_pretrained("text-bison")
+llm = OpenAI(model="gpt-4o-mini")
 
 SAMPLE_RATE = 48000
 client = speech.SpeechClient()
@@ -38,13 +38,42 @@ try:
 except:
     n = None
 
-cart = []
-products = []
+cart: list[dict] = []
+products: list[dict] = []
+
+chat_log_initial = [
+    SystemMessage(
+        content="You are a helpful assistant! Your name is Bob."
+    ),
+]
+chat_log: list = [
+    SystemMessage(
+        content="You are a helpful assistant! Your name is Bob."
+    ),
+]
 
 with open('prompts/context.txt') as f:
     prompt_context = f.read()
 with open('prompts/examples.txt') as f:
     prompt_examples = f.read()
+
+def view_cart() -> str:
+    return json.dumps(cart)
+
+tools = [
+    Tool(
+        name="View Cart",
+        func=view_cart,
+        description="View all items currently in the cart",
+    )
+]
+
+agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgetnType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)
 
 async def ws_prod(request):
     ws = web.WebSocketResponse()
@@ -109,15 +138,6 @@ async def ws_voice(request):
                             if result.is_final:
                                 ws._loop.call_soon_threadsafe(result_future.set_result, transcript)
 
-                """
-                with sr.Microphone() as s:
-                    try:
-                        print('listening...')
-                        audio = r.listen(s, timeout=2)
-                        ws._loop.call_soon_threadsafe(result_future.set_result, audio)
-                    except Exception as e:
-                        ws._loop.call_soon_threadsafe(result_future.set_exception, e)
-                """
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
@@ -135,56 +155,11 @@ async def ws_voice(request):
 
         if text != "":
             await ws.send_str('...')
-            
-            def getPriceByName(name):
-                product = list(filter(lambda p: p['name'] == name, products))[0]
-                price = int(product['price'])
 
-                return price
-            
-            # Process the recognized speech using the model and send the response
-            products_text = '\n'.join(
-                map(lambda x: f"{x['name']}: {x['price']}원",
-                    products
-                )
-            )
-            cart_text = '\n'.join(
-                map(lambda x: f"[{x['id']}] {x['name']} {x['count']}개: {getPriceByName(x['name']) * int(x['count'])}",
-                    cart
-                )
-            )
-
-            input_text = f"""{prompt_context}
-
-주문 가능한 품목
-{products_text}
----
-주문한 품목
-{cart_text}
----
-
-{prompt_examples}
-
-input: {text}
-output: """
-            parameters = {
-                "candidate_count": 1,
-                "max_output_tokens": 1024,
-                "stop_sequences": [
-                    "<|end|>"
-                ],
-                "temperature": 0.9,
-                "top_p": 1
-            }
-            response = model.predict(input_text, **parameters)
-            print(input_text)
+            response = agent.run(text)
+            print(text)
             print(f"Response from Model: {response.text}")
             await ws.send_str(f'RES:{response.text}')
-
-            if "## 대답" not in response.text:
-                continue
-
-            response_text = response.text.split("## 대답")[1]
 
             async def async_play(path):
                 result_future = asyncio.Future()
@@ -199,7 +174,7 @@ output: """
                 return await result_future
 
             print("Voice output process...")
-            tts = gTTS(response_text, lang='ko')
+            tts = gTTS(response.content, lang='ko')
             tts.save("temp.mp3")
             await async_play("temp.mp3")
             os.remove("temp.mp3")
