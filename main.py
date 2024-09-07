@@ -1,8 +1,11 @@
 import os
+from dotenv import load_dotenv
 import logging
 from pathlib import Path
 from aiohttp import web
 from websocket import ws_voice, ws_prod, ws_nfc
+
+load_dotenv()
 
 if not Path('voice-activated-kiosk-ui/build').is_dir():
     os.chdir("voice-activated-kiosk-ui")

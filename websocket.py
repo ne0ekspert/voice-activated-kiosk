@@ -12,6 +12,8 @@ from langchain_openai import ChatOpenAI
 from langchain.tools import Tool
 from langchain.agents import initialize_agent, AgentType
 from langchain.schema import SystemMessage
+from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
 from frontend_data import BaseItems, Screen
 
@@ -80,6 +82,12 @@ tools = [
     )
 ]
 
+store = {}
+def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
+    if session_id not in store:
+        store[session_id] = InMemoryChatMessageHistory()
+    return store[session_id]
+
 system_message = SystemMessage(
     content="You are a helpful assistant for a voice-activated kiosk. Be polite and friendly. When asked about menu items, provide detailed descriptions."
 )
@@ -93,6 +101,10 @@ agent = initialize_agent(
     agent_kwargs={
         "system_message": system_message
     },
+)
+conversation = RunnableWithMessageHistory(
+    agent,
+    get_session_history
 )
 
 async def ws_prod(request):
@@ -193,10 +205,13 @@ async def ws_voice(request):
         if text != "":
             await ws.send_str('...')
 
-            response = agent.run(text)
+            response = conversation.invoke(
+                {'input': text},
+                config={"configurable": {"session_id": "test-session"}}
+            )
             print(text)
-            print(f"Response from Model: {response.text}")
-            await ws.send_str(f'RES:{response.text}')
+            print(f"Response from Model: {response.output}")
+            await ws.send_str(f'RES:{response.output}')
 
             #print("Voice output process...")
             #tts = gTTS(response.content, lang='ko')
