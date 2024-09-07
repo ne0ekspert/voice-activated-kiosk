@@ -9,7 +9,7 @@ import pyaudio
 
 # Audio recording parameters
 STREAMING_LIMIT = 240000  # 4 minutes
-SAMPLE_RATE = 16000
+SAMPLE_RATE = 48000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 
 RED = "\033[0;31m"

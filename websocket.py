@@ -3,19 +3,21 @@ import json
 import asyncio
 import logging
 import threading
+from dotenv import load_dotenv
 from playsound import playsound
 from gtts import gTTS
 from google.cloud import speech
 from gcloud_stt import ResumableMicrophoneStream
-from langchain import OpenAI
+from langchain_openai import ChatOpenAI
 from langchain.tools import Tool
-from langchain.agents import initialize_agent, AgetnType
-from langchain.schema import SystemMessage, HumanMessage, AIMessage, ChatMessage
+from langchain.agents import initialize_agent, AgentType
+from langchain.schema import SystemMessage
 from aiohttp import web
+from frontend_data import BaseItems, Screen
+
+load_dotenv()
 
 logger = logging.Logger(__name__)
-
-llm = OpenAI(model="gpt-4o-mini")
 
 SAMPLE_RATE = 48000
 client = speech.SpeechClient()
@@ -38,57 +40,80 @@ try:
 except:
     n = None
 
-cart: list[dict] = []
-products: list[dict] = []
-
-chat_log_initial = [
-    SystemMessage(
-        content="You are a helpful assistant! Your name is Bob."
-    ),
-]
-chat_log: list = [
-    SystemMessage(
-        content="You are a helpful assistant! Your name is Bob."
-    ),
-]
+cart = BaseItems()
+products = []
+screen = Screen()
 
 with open('prompts/context.txt') as f:
     prompt_context = f.read()
 with open('prompts/examples.txt') as f:
     prompt_examples = f.read()
 
-def view_cart() -> str:
-    return json.dumps(cart)
+def view_menu() -> str:
+    return json.dumps(products)
 
 tools = [
     Tool(
+        name="View Menu",
+        func=view_menu,
+        description="View all items currently in the menu",
+    ),
+    Tool(
         name="View Cart",
-        func=view_cart,
+        func=cart.view_items,
         description="View all items currently in the cart",
+    ),
+    Tool(
+        name="Add Item to Cart",
+        func=cart.add_item,
+        description="Add an item to the cart"
+    ),
+    Tool(
+        name="Remove Item from Cart",
+        func=cart.remove_item,
+        description="Remove an item from the cart"
+    ),
+    Tool(
+        name="Change Screen",
+        func=screen.set_id,
+        description="Changes kiosk screen"
     )
 ]
 
+system_message = SystemMessage(
+    content="You are a helpful assistant for a voice-activated kiosk. Be polite and friendly. When asked about menu items, provide detailed descriptions."
+)
+
+llm = ChatOpenAI(model="gpt-4-0125-preview")
 agent = initialize_agent(
     tools=tools,
     llm=llm,
-    agent=AgetnType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True,
+    agent_kwargs={
+        "system_message": system_message
+    },
 )
 
 async def ws_prod(request):
+    global cart, products
+
     ws = web.WebSocketResponse()
     await ws.prepare(request)
+    cart.set_ws(ws)
+    screen.set_ws(ws)
 
     async for msg in ws:
-        global cart, products
 
         if msg.type == web.WSMsgType.TEXT:
             if msg.data.startswith("cart:"):
-                cart = json.loads(msg.data[5:])
-                print(f"Cart data updated: {cart}")
+                await cart.sync_items(json.loads(msg.data[5:]))
+                print(f"Cart data updated: {cart.items}")
             elif msg.data.startswith("prod:"):
                 products = json.loads(msg.data[5:])
-                print(f"Products updated: {products}")
+            elif msg.data.startswith("disp:"):
+                await screen.set_id(msg.data[5:])
+                print(f"Screen ID: {msg.data[5:]}")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
 
@@ -149,6 +174,18 @@ async def ws_voice(request):
         listener_thread.start()
 
         return await result_future
+    
+    async def async_play(path):
+        result_future = asyncio.Future()
+
+        def threaded_play(path):
+            playsound(path)
+            ws._loop.call_soon_threadsafe(result_future.set_result, 0)
+
+        play_thread = threading.Thread(target=threaded_play, args=(path,), daemon=True)
+        play_thread.start()
+
+        return await result_future
 
     while not ws.closed:
         text: str = await transcribe_async()
@@ -161,23 +198,11 @@ async def ws_voice(request):
             print(f"Response from Model: {response.text}")
             await ws.send_str(f'RES:{response.text}')
 
-            async def async_play(path):
-                result_future = asyncio.Future()
-
-                def threaded_play(path):
-                    playsound(path)
-                    ws._loop.call_soon_threadsafe(result_future.set_result, 0)
-
-                play_thread = threading.Thread(target=threaded_play, args=(path,), daemon=True)
-                play_thread.start()
-
-                return await result_future
-
-            print("Voice output process...")
-            tts = gTTS(response.content, lang='ko')
-            tts.save("temp.mp3")
-            await async_play("temp.mp3")
-            os.remove("temp.mp3")
+            #print("Voice output process...")
+            #tts = gTTS(response.content, lang='ko')
+            #tts.save("temp.mp3")
+            #await async_play("temp.mp3")
+            #os.remove("temp.mp3")
 
     return ws
 
@@ -203,7 +228,7 @@ async def ws_nfc(request):
     while not ws.closed:
         try:
             target = await read_tag_async()
-            ws.send_str(target.uid.hex())
+            await ws.send_str(target.uid.hex())
         except:
             pass
 
