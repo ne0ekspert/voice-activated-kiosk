@@ -4,7 +4,7 @@
 ## 개요
 
 음성 인식 키오스크는 음성만으로 **음식을 주문에 추가하거나 삭제**하고 NFC를 활용하여 결제 시스템을 구현하는 키오스크 시스템입니다.
-React.js로 구현된 화면과 Python 및 Vertex AI (text-bison) 기반 **음성 인식 및 생성형 AI 대답 생성 기술을 활용**하여 사용자가 편리하게 음식을 주문하고 결제할 수 있도록 지원합니다.
+React.js로 구현된 화면과 Python 및 ChatGPT 기반 **음성 인식 및 생성형 AI 대답 생성 기술을 활용**하여 사용자가 편리하게 음식을 주문하고 결제할 수 있도록 지원합니다.
 
 ## 기능
 
@@ -15,7 +15,7 @@ React.js로 구현된 화면과 Python 및 Vertex AI (text-bison) 기반 **음�
 ## 기술 스택
 
 * 프론트엔드: React.js
-* 백엔드: Python, Vertex AI (text-bison)
+* 백엔드: Python, GhatGPT
 * 기타: NFC 리더
 
 ## 설치 및 실행
