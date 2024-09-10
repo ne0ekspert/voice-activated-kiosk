@@ -56,9 +56,6 @@ def view_menu() -> str:
     """
     Display the current menu options.
 
-    This function generates a JSON string representing the available menu items.
-    Each item is displayed with its name, price, and a brief description.
-
     Returns:
         str: A JSON string containing all menu items.
     """
@@ -81,8 +78,8 @@ def add_item(name: str, quantity=1):
     장바구니에 항목을 추가합니다.
 
     Args:
-        name (str): Name of the item to add.
-        quantity (int, optional): Quantity of the item to add. Defaults to 1.
+        name (str): 장바구니에 추가할 항목의 이름
+        quantity (int, optional): 추가할 항목의 개수, 자동으로 1로 설정됨.
 
     Returns:
         str: Confirmation message indicating how many of the item were added.
@@ -104,7 +101,7 @@ def remove_item(name: str):
     장바구니에서 항목을 하나 제거합니다.
 
     Args:
-        name (str): Name of the item to remove from the cart.
+        name (str): 장바구니에서 제거할 항목의 이름
 
     Returns:
         str: Confirmation message indicating whether the item was successfully removed.
@@ -130,7 +127,7 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
     return store[session_id]
 
 system_message = SystemMessage(
-    content="당신은 음성인식 기능이 있는키오스크입니다. 한국어로 대답하세요. 메뉴 아이템을 물어보면 자세한 설명을 해주세요.",
+    content="당신은 음성인식 기능이 있는 키오스크입니다. 사용자의 언어로 대답하세요. 메뉴 아이템을 물어보면 자세한 설명을 해주세요.",
 )
 
 llm = ChatOpenAI(model="gpt-4-0125-preview")
@@ -185,6 +182,9 @@ async def ws_voice(request):
                 
                 with mic_manager as stream:
                     while not stream.closed:
+                        if result_future.done():
+                            break
+
                         stream.audio_input = []
                         audio_generator = stream.generator()
 
@@ -222,14 +222,16 @@ async def ws_voice(request):
         listener_thread = threading.Thread(target=threaded_listen_middle)
         listener_thread.daemon = True
         listener_thread.start()
-
+        
         return await result_future
+
     
     async def async_play(path):
         result_future = asyncio.Future()
 
         def threaded_play(path):
             playsound(path)
+            os.remove("temp.mp3")
             ws._loop.call_soon_threadsafe(result_future.set_result, 0)
 
         play_thread = threading.Thread(target=threaded_play, args=(path,), daemon=True)
@@ -255,7 +257,6 @@ async def ws_voice(request):
             tts = gTTS(response.content, lang='ko')
             tts.save("temp.mp3")
             await async_play("temp.mp3")
-            os.remove("temp.mp3")
 
     return ws
 
