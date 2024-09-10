@@ -9,7 +9,7 @@ from gtts import gTTS
 from google.cloud import speech
 from gcloud_stt import ResumableMicrophoneStream
 from langchain_openai import ChatOpenAI
-from langchain.tools import Tool
+from langchain.tools import tool
 from langchain.agents import initialize_agent, AgentType
 from langchain.schema import SystemMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory
@@ -42,7 +42,7 @@ try:
 except:
     n = None
 
-cart = BaseItems()
+cart = {}
 products = []
 screen = Screen()
 
@@ -51,35 +51,76 @@ with open('prompts/context.txt') as f:
 with open('prompts/examples.txt') as f:
     prompt_examples = f.read()
 
+@tool
 def view_menu() -> str:
+    """
+    Display the current menu options.
+
+    This function generates a JSON string representing the available menu items.
+    Each item is displayed with its name, price, and a brief description.
+
+    Returns:
+        str: A JSON string containing all menu items.
+    """
+
     return json.dumps(products)
 
+@tool
+def view_cart() -> str:
+    """
+    장바구니에 있는 항목들을 JSON 문자열로 출력합니다.
+    
+    Returns:
+        str: JSON string containing key-value pairs of item names and quantities.
+    """
+    return json.dumps(cart)
+    
+@tool
+def add_item(name: str, quantity=1):
+    """
+    장바구니에 항목을 추가합니다.
+
+    Args:
+        name (str): Name of the item to add.
+        quantity (int, optional): Quantity of the item to add. Defaults to 1.
+
+    Returns:
+        str: Confirmation message indicating how many of the item were added.
+    """
+
+    if name not in map(lambda x: x['name'], products):
+        return f"No such menu named as {name}"
+
+    if name in cart:
+        cart[name] += quantity
+    else:
+        cart[name] = quantity
+
+    return f"{name} {quantity}개를 장바구니에 추가했습니다"
+
+@tool
+def remove_item(name: str):
+    """
+    장바구니에서 항목을 하나 제거합니다.
+
+    Args:
+        name (str): Name of the item to remove from the cart.
+
+    Returns:
+        str: Confirmation message indicating whether the item was successfully removed.
+    """
+    removed_item = cart.pop(name, None)
+
+    if removed_item:
+        return f"{name}를 장바구니에서 제거했습니다"
+    else:
+        return f"장바구니에서 {name}을 찾을 수 없습니다"
+
 tools = [
-    Tool(
-        name="View Menu",
-        func=view_menu,
-        description="View all items currently in the menu",
-    ),
-    Tool(
-        name="View Cart",
-        func=cart.view_items,
-        description="View all items currently in the cart",
-    ),
-    Tool(
-        name="Add Item to Cart",
-        func=cart.add_item,
-        description="Add an item to the cart"
-    ),
-    Tool(
-        name="Remove Item from Cart",
-        func=cart.remove_item,
-        description="Remove an item from the cart"
-    ),
-    Tool(
-        name="Change Screen",
-        func=screen.set_id,
-        description="Changes kiosk screen"
-    )
+    view_menu,
+    view_cart,
+    add_item,
+    remove_item,
 ]
 
 store = {}
@@ -89,7 +130,7 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
     return store[session_id]
 
 system_message = SystemMessage(
-    content="You are a helpful assistant for a voice-activated kiosk. Be polite and friendly. When asked about menu items, provide detailed descriptions."
+    content="당신은 음성인식 기능이 있는키오스크입니다. 한국어로 대답하세요. 메뉴 아이템을 물어보면 자세한 설명을 해주세요.",
 )
 
 llm = ChatOpenAI(model="gpt-4-0125-preview")
@@ -109,22 +150,19 @@ conversation = RunnableWithMessageHistory(
 
 async def ws_prod(request):
     global cart, products
-
     ws = web.WebSocketResponse()
     await ws.prepare(request)
-    cart.set_ws(ws)
     screen.set_ws(ws)
 
     async for msg in ws:
 
         if msg.type == web.WSMsgType.TEXT:
             if msg.data.startswith("cart:"):
-                await cart.sync_items(json.loads(msg.data[5:]))
+                cart = json.loads(msg.data[5:])
                 print(f"Cart data updated: {cart.items}")
             elif msg.data.startswith("prod:"):
                 products = json.loads(msg.data[5:])
             elif msg.data.startswith("disp:"):
-                await screen.set_id(msg.data[5:])
                 print(f"Screen ID: {msg.data[5:]}")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
@@ -213,11 +251,11 @@ async def ws_voice(request):
             print(f"Response from Model: {response.output}")
             await ws.send_str(f'RES:{response.output}')
 
-            #print("Voice output process...")
-            #tts = gTTS(response.content, lang='ko')
-            #tts.save("temp.mp3")
-            #await async_play("temp.mp3")
-            #os.remove("temp.mp3")
+            print("Voice output process...")
+            tts = gTTS(response.content, lang='ko')
+            tts.save("temp.mp3")
+            await async_play("temp.mp3")
+            os.remove("temp.mp3")
 
     return ws
 
