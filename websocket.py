@@ -15,7 +15,7 @@ from langchain.schema import SystemMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
-from frontend_data import BaseItems, Screen
+from frontend_data import Screen
 
 load_dotenv()
 
@@ -42,7 +42,7 @@ try:
 except:
     n = None
 
-cart = {}
+cart: dict[str, int] = {}
 products = []
 screen = Screen()
 
@@ -112,12 +112,43 @@ def remove_item(name: str):
         return f"{name}를 장바구니에서 제거했습니다"
     else:
         return f"장바구니에서 {name}을 찾을 수 없습니다"
+    
+@tool
+def change_screen(screen_id: str):
+    """
+    키오스크 화면을 전환합니다.
+
+    Args:
+        screen_id (str): 변경할 화면 URI ("/", "/order", "/payment", "/payment/card", "/payment/cash")
+
+    Returns:
+        None
+    """
+
+    screen.set_id(screen_id)
+
+    return
+
+@tool
+def get_screen():
+    """
+    키오스크 화면 ID를 가져옵니다.
+
+    Args:
+        None
+
+    Returns:
+        str: 화면 URI
+    """
+
+    return screen.get_id(screen_id)
 
 tools = [
     view_menu,
     view_cart,
     add_item,
     remove_item,
+    change_screen,
 ]
 
 store = {}
@@ -127,14 +158,14 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
     return store[session_id]
 
 system_message = SystemMessage(
-    content="당신은 음성인식 기능이 있는 키오스크입니다. 사용자의 언어로 대답하세요. 메뉴 아이템을 물어보면 자세한 설명을 해주세요.",
+    content="당신은 음성인식 기능이 있는 키오스크입니다. 최종 답안은 사용자가 사용한 언어로 대답하세요. 메뉴 아이템을 물어보면 자세한 설명을 해주세요.",
 )
 
 llm = ChatOpenAI(model="gpt-4-0125-preview")
 agent = initialize_agent(
     tools=tools,
     llm=llm,
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
     agent_kwargs={
         "system_message": system_message
@@ -147,6 +178,7 @@ conversation = RunnableWithMessageHistory(
 
 async def ws_prod(request):
     global cart, products
+
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     screen.set_ws(ws)
@@ -161,6 +193,9 @@ async def ws_prod(request):
                 products = json.loads(msg.data[5:])
             elif msg.data.startswith("disp:"):
                 print(f"Screen ID: {msg.data[5:]}")
+            elif msg.data == "RESET":
+                cart = {}
+                print(f"Kiosk Reset")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
 
@@ -250,11 +285,11 @@ async def ws_voice(request):
                 config={"configurable": {"session_id": "test-session"}}
             )
             print(text)
-            print(f"Response from Model: {response.output}")
-            await ws.send_str(f'RES:{response.output}')
+            print(f"Response from Model: {response['output']}")
+            await ws.send_str(f"RES:{response['output']}")
 
             print("Voice output process...")
-            tts = gTTS(response.content, lang='ko')
+            tts = gTTS(response['output'], lang='ko')
             tts.save("temp.mp3")
             await async_play("temp.mp3")
 

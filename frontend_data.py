@@ -60,13 +60,17 @@ class Screen:
 
     def set_id(self, screen_id: str):
         assert self.ws is not None
+        assert screen_id in ["/", "/order", "/payment", "/payment/cash", "/payment/card"]
 
         self.screen_id = screen_id
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
-        loop.run_until_complete(self.ws.send_str(screen_id))
+        loop.run_until_complete(self.ws.send_str('scrn:'+screen_id))
         loop.close()
 
         return f"Set screen state to {screen_id}"
+    
+    def get_id(self):
+        return self.screen_id
