@@ -73,7 +73,7 @@ def view_cart() -> str:
     return json.dumps(cart)
     
 @tool
-def add_item(name: str, quantity=1):
+def add_item(name: str, quantity=1) -> str:
     """
     장바구니에 항목을 추가합니다.
 
@@ -96,7 +96,7 @@ def add_item(name: str, quantity=1):
     return f"{name} {quantity}개를 장바구니에 추가했습니다"
 
 @tool
-def remove_item(name: str):
+def remove_item(name: str) -> str:
     """
     장바구니에서 항목을 하나 제거합니다.
 
@@ -114,7 +114,7 @@ def remove_item(name: str):
         return f"장바구니에서 {name}을 찾을 수 없습니다"
     
 @tool
-def change_screen(screen_id: str):
+def change_screen(screen_id: str) -> None:
     """
     키오스크 화면을 전환합니다.
 
@@ -130,7 +130,7 @@ def change_screen(screen_id: str):
     return
 
 @tool
-def get_screen():
+def get_screen() -> str:
     """
     키오스크 화면 ID를 가져옵니다.
 
@@ -141,7 +141,7 @@ def get_screen():
         str: 화면 URI
     """
 
-    return screen.get_id(screen_id)
+    return screen.get_id()
 
 tools = [
     view_menu,
@@ -158,7 +158,7 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
     return store[session_id]
 
 system_message = SystemMessage(
-    content="당신은 음성인식 기능이 있는 키오스크입니다. 최종 답안은 사용자가 사용한 언어로 대답하세요. 메뉴 아이템을 물어보면 자세한 설명을 해주세요.",
+    content=open('prompts/context.txt', 'r').read(),
 )
 
 llm = ChatOpenAI(model="gpt-4-0125-preview")
@@ -188,7 +188,7 @@ async def ws_prod(request):
         if msg.type == web.WSMsgType.TEXT:
             if msg.data.startswith("cart:"):
                 cart = json.loads(msg.data[5:])
-                print(f"Cart data updated: {cart.items}")
+                print(f"Cart data updated: {cart}")
             elif msg.data.startswith("prod:"):
                 products = json.loads(msg.data[5:])
             elif msg.data.startswith("disp:"):
