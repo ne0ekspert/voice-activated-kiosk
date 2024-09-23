@@ -73,7 +73,7 @@ def view_cart() -> str:
     return json.dumps(cart)
     
 @tool
-def add_item(name: str, quantity=1) -> str:
+def add_item_to_cart(name: str, quantity=1) -> str:
     """
     장바구니에 항목을 추가합니다.
 
@@ -96,7 +96,7 @@ def add_item(name: str, quantity=1) -> str:
     return f"{name} {quantity}개를 장바구니에 추가했습니다"
 
 @tool
-def remove_item(name: str) -> str:
+def remove_item_from_cart(name: str) -> str:
     """
     장바구니에서 항목을 하나 제거합니다.
 
@@ -146,8 +146,8 @@ def get_screen() -> str:
 tools = [
     view_menu,
     view_cart,
-    add_item,
-    remove_item,
+    add_item_to_cart,
+    remove_item_from_cart,
     change_screen,
 ]
 
