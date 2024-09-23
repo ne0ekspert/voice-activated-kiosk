@@ -18,6 +18,7 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
 from frontend_data import Screen
+from rag import add_item
 
 load_dotenv()
 
@@ -280,6 +281,10 @@ async def ws_voice(request):
 
         return await result_future
 
+    @tool
+    async def final_answer(answer):
+        
+
     while not ws.closed:
         text: str = await transcribe_async()
 
@@ -291,25 +296,39 @@ async def ws_voice(request):
                 config={"configurable": {"session_id": "test-session"}}
             )
             print(text)
-            output = None
+
+            output_text = ""
+            
             try:
                 output = json.loads(response['output'])
-                tool_labels: dict[str, Callable] = {}
 
-                for tool in tools:
-                    tool_labels[tool.__name__] = tool
+                if output['action'] == "Final Answer":
+                    raise InterruptedError(output['action_input'])
 
-                selected_tool = tool_labels[output['action']]
+                selected_tool = {
+                    "view_menu": view_menu,
+                    "view_cart": view_cart,
+                    "add_item_to_cart": add_item_to_cart,
+                    "remove_item_from_cart": remove_item_from_cart,
+                    "change_screen": change_screen,
+                    "Final Answer": final_answer
+                }[output['action']]
                 tool_output = selected_tool.invoke(output['action_input'])
                 store['test-session'].add_message(ToolMessage(tool_output))
-            except:
-                print(f"Response from Model: {response['output']}")
-                await ws.send_str(f"RES:{response['output']}")
+            except InterruptedError as e:
+                print(str(e))
+                output_text = str(e)
+            except Exception as e:
+                logger.error(f"JSON error: {e}")
+                output_text = response['output']
 
-                print("Voice output process...")
-                tts = gTTS(response['output'], lang='ko')
-                tts.save("temp.mp3")
-                await async_play("temp.mp3")
+            print(f"Response from Model: {output_text}")
+            await ws.send_str(f"RES:{output_text}")
+
+            print("Voice output process...")
+            tts = gTTS(output_text, lang='ko')
+            tts.save("temp.mp3")
+            await async_play("temp.mp3")
 
     return ws
 
