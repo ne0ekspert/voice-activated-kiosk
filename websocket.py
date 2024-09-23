@@ -215,38 +215,42 @@ async def ws_voice(request):
 
                 await ws.send_str('!!!')
                 
-                with mic_manager as stream:
-                    while not stream.closed:
-                        if result_future.done():
-                            break
+                try:
+                    with mic_manager as stream:
+                        while not stream.closed:
+                            if result_future.done():
+                                return
 
-                        stream.audio_input = []
-                        audio_generator = stream.generator()
+                            stream.audio_input = []
+                            audio_generator = stream.generator()
 
-                        requests = (
-                            speech.StreamingRecognizeRequest(audio_content=content)
-                            for content in audio_generator
-                        )
+                            requests = (
+                                speech.StreamingRecognizeRequest(audio_content=content)
+                                for content in audio_generator
+                            )
 
-                        responses = client.streaming_recognize(streaming_config, requests)
+                            responses = client.streaming_recognize(streaming_config, requests)
 
-                        for response in responses:
-                            if not response.results:
-                                continue
+                            for response in responses:
+                                if not response.results:
+                                    continue
 
-                            result = response.results[0]
+                                result = response.results[0]
 
-                            if not result.alternatives:
-                                continue
+                                if not result.alternatives:
+                                    continue
 
-                            transcript = result.alternatives[0].transcript
+                                transcript = result.alternatives[0].transcript
 
-                            logger.warning(transcript)
+                                logger.warning(transcript)
 
-                            await ws.send_str('INPUT:'+transcript)
+                                await ws.send_str('INPUT:'+transcript)
 
-                            if result.is_final:
-                                ws._loop.call_soon_threadsafe(result_future.set_result, transcript)
+                                if result.is_final:
+                                    ws._loop.call_soon_threadsafe(result_future.set_result, transcript)
+                except Exception as e:
+                    logger.error(f"Transcription failed: {e}")
+                    return
 
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
