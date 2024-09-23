@@ -18,7 +18,6 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
 from frontend_data import Screen
-from rag import add_item
 
 load_dotenv()
 
@@ -281,10 +280,6 @@ async def ws_voice(request):
 
         return await result_future
 
-    @tool
-    async def final_answer(answer):
-        
-
     while not ws.closed:
         text: str = await transcribe_async()
 
@@ -311,7 +306,6 @@ async def ws_voice(request):
                     "add_item_to_cart": add_item_to_cart,
                     "remove_item_from_cart": remove_item_from_cart,
                     "change_screen": change_screen,
-                    "Final Answer": final_answer
                 }[output['action']]
                 tool_output = selected_tool.invoke(output['action_input'])
                 store['test-session'].add_message(ToolMessage(tool_output))
