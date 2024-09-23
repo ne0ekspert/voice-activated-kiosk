@@ -3,6 +3,7 @@ import json
 import asyncio
 import logging
 import threading
+from typing import Callable
 from dotenv import load_dotenv
 from playsound import playsound
 from gtts import gTTS
@@ -12,6 +13,7 @@ from langchain_openai import ChatOpenAI
 from langchain.tools import tool
 from langchain.agents import initialize_agent, AgentType
 from langchain.schema import SystemMessage
+from langchain_core.messages import ToolMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
@@ -151,7 +153,7 @@ tools = [
     change_screen,
 ]
 
-store = {}
+store: dict[str, InMemoryChatMessageHistory] = {}
 def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
     if session_id not in store:
         store[session_id] = InMemoryChatMessageHistory()
@@ -289,13 +291,25 @@ async def ws_voice(request):
                 config={"configurable": {"session_id": "test-session"}}
             )
             print(text)
-            print(f"Response from Model: {response['output']}")
-            await ws.send_str(f"RES:{response['output']}")
+            output = None
+            try:
+                output = json.loads(response['output'])
+                tool_labels: dict[str, Callable] = {}
 
-            print("Voice output process...")
-            tts = gTTS(response['output'], lang='ko')
-            tts.save("temp.mp3")
-            await async_play("temp.mp3")
+                for tool in tools:
+                    tool_labels[tool.__name__] = tool
+
+                selected_tool = tool_labels[output['action']]
+                tool_output = selected_tool.invoke(output['action_input'])
+                store['test-session'].add_message(ToolMessage(tool_output))
+            except:
+                print(f"Response from Model: {response['output']}")
+                await ws.send_str(f"RES:{response['output']}")
+
+                print("Voice output process...")
+                tts = gTTS(response['output'], lang='ko')
+                tts.save("temp.mp3")
+                await async_play("temp.mp3")
 
     return ws
 
