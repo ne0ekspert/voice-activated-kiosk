@@ -72,6 +72,7 @@ def view_cart() -> str:
     Returns:
         str: JSON string containing key-value pairs of item names and quantities.
     """
+
     return json.dumps(cart)
     
 @tool
@@ -86,6 +87,8 @@ def add_item_to_cart(name: str, quantity=1) -> str:
     Returns:
         str: Confirmation message indicating how many of the item were added.
     """
+
+    screen.set_id("/order")
 
     if name not in map(lambda x: x['name'], products):
         return f"No such menu named as {name}"
@@ -145,12 +148,39 @@ def get_screen() -> str:
 
     return screen.get_id()
 
+@tool
+def pay_with_cash():
+    """
+    화면을 현금 결제 화면으로 이동합니다.
+    사용자가 현금 결제를 요청했을 때 사용하세요.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    screen.set_id("/payment/cash")
+
+    return
+
+@tool
+def pay_with_card():
+    """
+    화면을 카드 결제 화면으로 이동합니다.
+    사용자가 카드 결제를 요청했을 때 사용하세요.
+    """
+    screen.set_id("/payment/card")
+
+    return
+
 tools = [
     view_menu,
     view_cart,
     add_item_to_cart,
     remove_item_from_cart,
-    change_screen,
+    pay_with_cash,
+    pay_with_card
 ]
 
 store: dict[str, InMemoryChatMessageHistory] = {}
@@ -186,7 +216,6 @@ async def ws_prod(request):
     screen.set_ws(ws)
 
     async for msg in ws:
-
         if msg.type == web.WSMsgType.TEXT:
             if msg.data.startswith("cart:"):
                 cart = json.loads(msg.data[5:])
@@ -318,6 +347,7 @@ async def ws_voice(request):
 
             print(f"Response from Model: {output_text}")
             await ws.send_str(f"RES:{output_text}")
+            await ws.send_str(f"CART:{json.dumps(cart)}")
 
             print("Voice output process...")
             tts = gTTS(output_text, lang='ko')
