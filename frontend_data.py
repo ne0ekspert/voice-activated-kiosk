@@ -63,12 +63,8 @@ class Screen:
         assert screen_id in ["/", "/order", "/payment", "/payment/cash", "/payment/card"]
 
         self.screen_id = screen_id
-
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         
-        loop.run_until_complete(self.ws.send_str('scrn:'+screen_id))
-        loop.close()
+        self.ws._loop.run_until_complete(self.ws.send_str('scrn:'+screen_id))
 
         return f"Set screen state to {screen_id}"
     
