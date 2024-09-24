@@ -64,7 +64,7 @@ class Screen:
 
         self.screen_id = screen_id
         
-        self.ws._loop.run_until_complete(self.ws.send_str('scrn:'+screen_id))
+        self.ws._loop.create_task(self.ws.send_str('scrn:'+screen_id))
 
         return f"Set screen state to {screen_id}"
     
