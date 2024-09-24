@@ -278,7 +278,12 @@ async def ws_voice(request):
                                 await ws.send_str('INPUT:'+transcript)
 
                                 if result.is_final:
-                                    ws._loop.call_soon_threadsafe(result_future.set_result, transcript)
+                                    try:
+                                        ws._loop.call_soon_threadsafe(result_future.set_result, transcript)
+                                    except asyncio.exceptions.InvalidStateError:
+                                        return
+                                    return
+                                
                 except Exception as e:
                     logger.error(f"Transcription failed: {e}")
                     return
@@ -366,9 +371,10 @@ async def ws_nfc(request):
             try:
                 for target in n.poll():
                     ws._loop.call_soon_threadsafe(result_future.set_result, target)
-                    break
+                    return
             except Exception as e:
                 ws._loop.call_soon_threadsafe(result_future.set_exception, e)
+                return
 
         read_tag_thread = threading.Thread(target=threaded_read_tag, daemon=True)
         read_tag_thread.start()
