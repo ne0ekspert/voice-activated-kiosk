@@ -64,7 +64,20 @@ def view_menu() -> str:
 
     screen.set_id("/order")
 
-    return json.dumps(products, ensure_ascii=False)
+    total = 0
+
+    res = ""
+    for k, v in cart.items():
+        price = 0
+        for v in products:
+            if v['name'] == k:
+                price = v['price']
+        res += f"{k} {v}개 = {price * v}\n"
+        total += price * v
+    
+    res += f"합계 = {total}"
+
+    return res
 
 @tool
 def view_cart() -> str:
