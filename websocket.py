@@ -3,7 +3,6 @@ import json
 import asyncio
 import logging
 import threading
-from typing import Callable
 from dotenv import load_dotenv
 from playsound import playsound
 from gtts import gTTS
@@ -18,6 +17,7 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
 from frontend_data import Screen
+from person_detector import PersonDetection
 
 load_dotenv()
 
@@ -47,6 +47,8 @@ except:
 cart: dict[str, int] = {}
 products = []
 screen = Screen()
+detector = PersonDetection()
+detector.start()
 
 with open('prompts/context.txt') as f:
     prompt_context = f.read()
@@ -159,36 +161,6 @@ def remove_item_from_cart(name: str) -> str:
         return f"{name}를 장바구니에서 제거했습니다"
     else:
         return f"장바구니에서 {name}을 찾을 수 없습니다"
-    
-@tool
-def change_screen(screen_id: str) -> None:
-    """
-    키오스크 화면을 전환합니다.
-
-    Args:
-        screen_id (str): 변경할 화면 URI ("/", "/order", "/payment", "/payment/card", "/payment/cash")
-
-    Returns:
-        None
-    """
-
-    screen.set_id(screen_id)
-
-    return
-
-@tool
-def get_screen() -> str:
-    """
-    키오스크 화면 ID를 가져옵니다.
-
-    Args:
-        None
-
-    Returns:
-        str: 화면 URI
-    """
-
-    return screen.get_id()
 
 @tool
 def pay_with_cash():
@@ -236,7 +208,6 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
         store[session_id] = InMemoryChatMessageHistory()
         store[session_id].add_message(system_message)
     return store[session_id]
-
 
 llm = ChatOpenAI(model="gpt-4-0125-preview")
 agent = initialize_agent(
