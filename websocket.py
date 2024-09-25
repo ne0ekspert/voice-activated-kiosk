@@ -62,6 +62,8 @@ def view_menu() -> str:
         str: A JSON string containing all menu items.
     """
 
+    screen.set_id("/order")
+
     return json.dumps(products, ensure_ascii=False)
 
 @tool
@@ -72,6 +74,8 @@ def view_cart() -> str:
     Returns:
         str: JSON string containing key-value pairs of item names and quantities.
     """
+
+    screen.set_id("/order")
 
     return json.dumps(cart, ensure_ascii=False)
     
@@ -101,6 +105,28 @@ def add_item_to_cart(name: str, quantity=1) -> str:
     return f"{name} {quantity}개를 장바구니에 추가했습니다"
 
 @tool
+def change_quantity_from_cart(name: str, quantity: int) -> str:
+    """
+    장바구니의 한 가지 항목의 수량을 바꿉니다.
+
+    Args:
+        name (str): 장바구니에서 수량을 변경할 항목의 이름
+        quantity (int): 수량
+        
+    Returns:
+        str: Confirmation message indicating whether the item was successfully changed.
+    """
+
+    if map(lambda x: x['name'], products):
+        return "존재하지 않는 메뉴입니다"
+    
+    if name in cart.keys():
+        cart[name] = quantity
+        return f"{name}의 개수를 {quantity}로 변경했습니다"
+    else:
+        return f"장바구니에서 {name}을 찾을 수 없습니다"
+
+@tool
 def remove_item_from_cart(name: str) -> str:
     """
     장바구니에서 항목을 하나 제거합니다.
@@ -111,6 +137,9 @@ def remove_item_from_cart(name: str) -> str:
     Returns:
         str: Confirmation message indicating whether the item was successfully removed.
     """
+    if map(lambda x: x['name'], products):
+        return "존재하지 않는 메뉴입니다"
+    
     removed_item = cart.pop(name, None)
 
     if removed_item:
@@ -178,6 +207,7 @@ tools = [
     view_menu,
     view_cart,
     add_item_to_cart,
+    change_quantity_from_cart,
     remove_item_from_cart,
     pay_with_cash,
     pay_with_card
