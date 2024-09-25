@@ -62,7 +62,7 @@ def view_menu() -> str:
         str: A JSON string containing all menu items.
     """
 
-    return json.dumps(products)
+    return json.dumps(products, ensure_ascii=False)
 
 @tool
 def view_cart() -> str:
@@ -73,7 +73,7 @@ def view_cart() -> str:
         str: JSON string containing key-value pairs of item names and quantities.
     """
 
-    return json.dumps(cart)
+    return json.dumps(cart, ensure_ascii=False)
     
 @tool
 def add_item_to_cart(name: str, quantity=1) -> str:
@@ -183,15 +183,17 @@ tools = [
     pay_with_card
 ]
 
+system_message = SystemMessage(
+    content=open('prompts/context.txt', 'r').read(),
+)
+
 store: dict[str, InMemoryChatMessageHistory] = {}
 def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
     if session_id not in store:
         store[session_id] = InMemoryChatMessageHistory()
+        store[session_id].add_message(system_message)
     return store[session_id]
 
-system_message = SystemMessage(
-    content=open('prompts/context.txt', 'r').read(),
-)
 
 llm = ChatOpenAI(model="gpt-4-0125-preview")
 agent = initialize_agent(
@@ -199,9 +201,6 @@ agent = initialize_agent(
     llm=llm,
     agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
-    agent_kwargs={
-        "system_message": system_message
-    },
 )
 conversation = RunnableWithMessageHistory(
     agent,
@@ -319,7 +318,7 @@ async def ws_voice(request):
 
         if text != "":
             await ws.send_str('...')
-            
+
             while True:
                 response = conversation.invoke(
                     {'input': text},
@@ -343,7 +342,7 @@ async def ws_voice(request):
                         "change_screen": change_screen,
                     }[output['action']]
                     tool_output = selected_tool.invoke(output['action_input'])
-                    store['test-session'].add_message(ToolMessage(tool_output))
+                    store['test-session'].add_message(ToolMessage(tool_output, tool_call_id="id"))
                     continue
                 except InterruptedError as e:
                     print(str(e))
