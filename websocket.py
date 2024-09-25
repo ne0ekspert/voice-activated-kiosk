@@ -319,36 +319,40 @@ async def ws_voice(request):
 
         if text != "":
             await ws.send_str('...')
-
-            response = conversation.invoke(
-                {'input': text},
-                config={"configurable": {"session_id": "test-session"}}
-            )
-            print(text)
-
-            output_text = ""
             
-            try:
-                output = json.loads(response['output'])
+            while True:
+                response = conversation.invoke(
+                    {'input': text},
+                    config={"configurable": {"session_id": "test-session"}}
+                )
+                print(text)
 
-                if output['action'] == "Final Answer":
-                    raise InterruptedError(output['action_input'])
+                output_text = ""
+                
+                try:
+                    output = json.loads(response['output'])
 
-                selected_tool = {
-                    "view_menu": view_menu,
-                    "view_cart": view_cart,
-                    "add_item_to_cart": add_item_to_cart,
-                    "remove_item_from_cart": remove_item_from_cart,
-                    "change_screen": change_screen,
-                }[output['action']]
-                tool_output = selected_tool.invoke(output['action_input'])
-                store['test-session'].add_message(ToolMessage(tool_output))
-            except InterruptedError as e:
-                print(str(e))
-                output_text = str(e)
-            except Exception as e:
-                logger.error(f"JSON error: {e}")
-                output_text = response['output']
+                    if output['action'] == "Final Answer":
+                        raise InterruptedError(output['action_input'])
+
+                    selected_tool = {
+                        "view_menu": view_menu,
+                        "view_cart": view_cart,
+                        "add_item_to_cart": add_item_to_cart,
+                        "remove_item_from_cart": remove_item_from_cart,
+                        "change_screen": change_screen,
+                    }[output['action']]
+                    tool_output = selected_tool.invoke(output['action_input'])
+                    store['test-session'].add_message(ToolMessage(tool_output))
+                    continue
+                except InterruptedError as e:
+                    print(str(e))
+                    output_text = str(e)
+                    break
+                except Exception as e:
+                    logger.error(f"JSON error: {e}")
+                    output_text = response['output']
+                    break
 
             print(f"Response from Model: {output_text}")
             await ws.send_str(f"RES:{output_text}")
