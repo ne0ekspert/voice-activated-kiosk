@@ -328,7 +328,9 @@ async def ws_voice(request):
         return await result_future
 
     while not ws.closed:
+        playsound("sfx/start_rec.wav", block=False)
         text: str = await transcribe_async()
+        playsound("sfx/stop_rec.wav", block=False)
 
         if text != "":
             await ws.send_str('...')
