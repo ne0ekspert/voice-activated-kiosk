@@ -355,7 +355,6 @@ async def ws_voice(request):
                         "view_cart": view_cart,
                         "add_item_to_cart": add_item_to_cart,
                         "remove_item_from_cart": remove_item_from_cart,
-                        "change_screen": change_screen,
                     }[output['action']]
                     tool_output = selected_tool.invoke(output['action_input'])
                     store['test-session'].add_message(ToolMessage(tool_output, tool_call_id="id"))
