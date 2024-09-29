@@ -239,6 +239,7 @@ async def ws_prod(request):
                 print(f"Screen ID: {msg.data[5:]}")
             elif msg.data == "RESET":
                 cart = {}
+                store.pop("test-session")
                 print(f"Kiosk Reset")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
