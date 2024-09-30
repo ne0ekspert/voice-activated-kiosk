@@ -48,11 +48,6 @@ cart: dict[str, int] = {}
 products = []
 screen = Screen()
 
-with open('prompts/context.txt') as f:
-    prompt_context = f.read()
-with open('prompts/examples.txt') as f:
-    prompt_examples = f.read()
-
 @tool
 def view_menu() -> str:
     """
@@ -131,7 +126,7 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
         str: Confirmation message indicating whether the item was successfully changed.
     """
 
-    if map(lambda x: x['name'], products):
+    if name not in map(lambda x: x['name'], products):
         return "존재하지 않는 메뉴입니다"
     
     if name in cart.keys():
