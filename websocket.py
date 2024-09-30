@@ -23,7 +23,7 @@ load_dotenv()
 
 logger = logging.Logger(__name__)
 
-SAMPLE_RATE = 48000
+SAMPLE_RATE = 16000
 client = speech.SpeechClient()
 config = speech.RecognitionConfig(
     encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -78,9 +78,9 @@ def view_cart() -> str:
     res = ""
     for k, v in cart.items():
         price = 0
-        for v in products:
-            if v['name'] == k:
-                price = v['price']
+        for product in products:
+            if product['name'] == k:
+                price = product['price']
         res += f"{k} {v}개 = {price * v}\n"
         total += price * v
     
@@ -255,14 +255,14 @@ async def ws_voice(request):
     await ws.prepare(request)
     print(ws.status)
 
-    #person_detection_task = asyncio.create_task(run_person_detection())
+    person_detection_task = asyncio.create_task(run_person_detection())
 
     async def transcribe_async():
         result_future = asyncio.Future()
 
         def threaded_listen_middle():
             async def threaded_listen():
-                mic_manager = ResumableMicrophoneStream(48000, SAMPLE_RATE // 10)
+                mic_manager = ResumableMicrophoneStream(SAMPLE_RATE, SAMPLE_RATE // 10)
 
                 await ws.send_str('!!!')
                 
@@ -383,7 +383,7 @@ async def ws_voice(request):
             tts.save("temp.mp3")
             await async_play("temp.mp3")
 
-    #person_detection_task.cancel()
+    person_detection_task.cancel()
 
     return ws
 
@@ -410,6 +410,7 @@ async def ws_nfc(request):
     while not ws.closed:
         try:
             target = await read_tag_async()
+            store['test-session'].add_message(SystemMessage(content="NFC payment success"))
             await ws.send_str(target.uid.hex())
         except:
             pass
