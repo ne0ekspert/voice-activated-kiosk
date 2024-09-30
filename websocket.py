@@ -11,13 +11,13 @@ from gcloud_stt import ResumableMicrophoneStream
 from langchain_openai import ChatOpenAI
 from langchain.tools import tool
 from langchain.agents import initialize_agent, AgentType
-from langchain.schema import SystemMessage
+from langchain.schema import SystemMessage, AIMessage
 from langchain_core.messages import ToolMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
 from frontend_data import Screen
-from person_detector import PersonDetection
+from person_detector import run_person_detection
 
 load_dotenv()
 
@@ -47,8 +47,6 @@ except:
 cart: dict[str, int] = {}
 products = []
 screen = Screen()
-detector = PersonDetection()
-detector.start()
 
 with open('prompts/context.txt') as f:
     prompt_context = f.read()
@@ -62,6 +60,20 @@ def view_menu() -> str:
 
     Returns:
         str: A JSON string containing all menu items.
+    """
+
+    screen.set_id("/order")
+
+    return json.dumps(products, ensure_ascii=False)
+
+
+@tool
+def view_cart() -> str:
+    """
+    장바구니에 있는 항목들을 JSON 문자열로 출력합니다.
+    
+    Returns:
+        str: JSON string containing key-value pairs of item names and quantities.
     """
 
     screen.set_id("/order")
@@ -80,19 +92,6 @@ def view_menu() -> str:
     res += f"합계 = {total}"
 
     return res
-
-@tool
-def view_cart() -> str:
-    """
-    장바구니에 있는 항목들을 JSON 문자열로 출력합니다.
-    
-    Returns:
-        str: JSON string containing key-value pairs of item names and quantities.
-    """
-
-    screen.set_id("/order")
-
-    return json.dumps(cart, ensure_ascii=False)
     
 @tool
 def add_item_to_cart(name: str, quantity=1) -> str:
@@ -183,6 +182,12 @@ def pay_with_card():
     """
     화면을 카드 결제 화면으로 이동합니다.
     사용자가 카드 결제를 요청했을 때 사용하세요.
+    
+    Args:
+        None
+
+    Returns:
+        None
     """
     screen.set_id("/payment/card")
 
@@ -201,15 +206,19 @@ tools = [
 system_message = SystemMessage(
     content=open('prompts/context.txt', 'r').read(),
 )
+welcome_message = AIMessage(
+    content=open('prompts/welcome.txt', 'r').read()
+)
 
 store: dict[str, InMemoryChatMessageHistory] = {}
 def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
     if session_id not in store:
         store[session_id] = InMemoryChatMessageHistory()
         store[session_id].add_message(system_message)
+        store[session_id].add_message(welcome_message)
     return store[session_id]
 
-llm = ChatOpenAI(model="gpt-4-0125-preview")
+llm = ChatOpenAI(model="gpt-4o-mini")
 agent = initialize_agent(
     tools=tools,
     llm=llm,
@@ -238,7 +247,7 @@ async def ws_prod(request):
             elif msg.data.startswith("disp:"):
                 print(f"Screen ID: {msg.data[5:]}")
             elif msg.data == "RESET":
-                cart = {}
+                cart = dict()
                 store.pop("test-session")
                 print(f"Kiosk Reset")
         elif msg.type == web.WSMsgType.ERROR:
@@ -250,6 +259,8 @@ async def ws_voice(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     print(ws.status)
+
+    #person_detection_task = asyncio.create_task(run_person_detection())
 
     async def transcribe_async():
         result_future = asyncio.Future()
@@ -263,8 +274,8 @@ async def ws_voice(request):
                 try:
                     with mic_manager as stream:
                         while not stream.closed:
-                            if result_future.done():
-                                return
+                            #if result_future.done():
+                            #    return
 
                             stream.audio_input = []
                             audio_generator = stream.generator()
@@ -287,7 +298,7 @@ async def ws_voice(request):
 
                                 transcript = result.alternatives[0].transcript
 
-                                logger.warning(transcript)
+                                logger.info(transcript)
 
                                 await ws.send_str('INPUT:'+transcript)
 
@@ -314,7 +325,6 @@ async def ws_voice(request):
         
         return await result_future
 
-    
     async def async_play(path):
         result_future = asyncio.Future()
 
@@ -377,6 +387,8 @@ async def ws_voice(request):
             tts = gTTS(output_text, lang='ko')
             tts.save("temp.mp3")
             await async_play("temp.mp3")
+
+    #person_detection_task.cancel()
 
     return ws
 
