@@ -27,23 +27,22 @@ class PersonDetection():
         mp_face_mesh = mp.solutions.face_mesh
 
         with mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5) as face_mesh:
-            while not self.isDone:
-                image = self.camera.capture_image()
+            image = self.camera.capture_image()
 
-                if not image:
-                    continue
+            if not image:
+                return
 
-                image = np.array(image)
-                self.height, self.width, _ = image.shape
+            image = np.array(image)
+            self.height, self.width, _ = image.shape
 
-                # BGR 이미지를 RGB로 변환
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                # 이미지를 읽기 전용으로 만들기
-                results = face_mesh.process(image)
+            # BGR 이미지를 RGB로 변환
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # 이미지를 읽기 전용으로 만들기
+            results = face_mesh.process(image)
 
-                self.draw_nearest_face(image, results)
+            self.draw_nearest_face(image, results)
 
-                await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
 
     def draw_nearest_face(self, image, results):
         mp_face_mesh = mp.solutions.face_mesh
@@ -112,7 +111,7 @@ class PersonDetection():
         else:
             return False
         
-    async def start(self):
+    def start(self):
         camera_config = self.camera.create_still_configuration(main={"size": (1920, 1080)}, lores={"size": (640, 480)}, display="lores")
         self.camera.configure(camera_config)
 
@@ -138,7 +137,7 @@ class PersonDetection():
 
 async def run_person_detection():
     detector = PersonDetection()
-    await detector.start()
+    detector.start()
 
 if __name__ == "__main__":
     asyncio.run(run_person_detection())
