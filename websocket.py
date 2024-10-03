@@ -128,6 +128,8 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
         str: Confirmation message indicating whether the item was successfully changed.
     """
 
+    screen.set_id("/order")
+
     if name not in map(lambda x: x['name'], products):
         return "존재하지 않는 메뉴입니다"
     
@@ -148,7 +150,10 @@ def remove_item_from_cart(name: str) -> str:
     Returns:
         str: Confirmation message indicating whether the item was successfully removed.
     """
-    if map(lambda x: x['name'], products):
+
+    screen.set_id("/order")
+
+    if name not in map(lambda x: x['name'], products):
         return "존재하지 않는 메뉴입니다"
     
     removed_item = cart.pop(name, None)
@@ -342,7 +347,7 @@ async def ws_voice(request):
             logger.warning("Face detected!")
             detected_this_session = True
             
-            tts = gTTS(open('prompts/welcome.txt', 'r').read(), lang='ko')
+            tts = gTTS(open('prompts/welcome.txt', 'r').read(), lang='ko', lang_check=False)
             tts.save("temp.mp3")
             await async_play('temp.mp3')
 
@@ -394,7 +399,7 @@ async def ws_voice(request):
             await ws.send_str(f"CART:{json.dumps(cart)}")
 
             print("Voice output process...")
-            tts = gTTS(output_text, lang='ko')
+            tts = gTTS(output_text, lang='ko', lang_check=False)
             tts.save("temp.mp3")
             await async_play("temp.mp3")
 
