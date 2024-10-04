@@ -17,7 +17,7 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
 from frontend_data import Screen
-from person_detector import PersonDetection
+#from person_detector import PersonDetection
 
 load_dotenv()
 
@@ -47,8 +47,8 @@ except:
 cart: dict[str, int] = {}
 products = []
 screen = Screen()
-detection = PersonDetection()
-detection.start()
+#detection = PersonDetection()
+#detection.start()
 
 @tool
 def view_menu() -> str:
@@ -232,8 +232,10 @@ conversation = RunnableWithMessageHistory(
     get_session_history
 )
 
+detected_this_session = False
+
 async def ws_prod(request):
-    global cart, products
+    global cart, products, detected_this_session
 
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -251,6 +253,7 @@ async def ws_prod(request):
             elif msg.data == "RESET":
                 cart = dict()
                 store.pop("test-session")
+                detected_this_session = False
                 print(f"Kiosk Reset")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
@@ -262,17 +265,17 @@ async def ws_voice(request):
     await ws.prepare(request)
     print(ws.status)
 
-    detected_this_session = False
-
-    async def async_play(path):
+    async def async_tts(text):
         result_future = asyncio.Future()
 
-        def threaded_play(path):
-            playsound(path)
+        def threaded_play(text):
+            tts = gTTS(text, lang='ko', lang_check=False)
+            tts.save("temp.mp3")
+            playsound("temp.mp3")
             os.remove("temp.mp3")
             ws._loop.call_soon_threadsafe(result_future.set_result, 0)
 
-        play_thread = threading.Thread(target=threaded_play, args=(path,), daemon=True)
+        play_thread = threading.Thread(target=threaded_play, args=(text,), daemon=True)
         play_thread.start()
 
         return await result_future
@@ -289,9 +292,6 @@ async def ws_voice(request):
                 try:
                     with mic_manager as stream:
                         while not stream.closed:
-                            #if result_future.done():
-                            #    return
-
                             stream.audio_input = []
                             audio_generator = stream.generator()
 
@@ -346,10 +346,8 @@ async def ws_voice(request):
         if detection.detected and not detected_this_session:
             logger.warning("Face detected!")
             detected_this_session = True
-            
-            tts = gTTS(open('prompts/welcome.txt', 'r').read(), lang='ko', lang_check=False)
-            tts.save("temp.mp3")
-            await async_play('temp.mp3')
+
+            await async_tts(open('prompts/welcome.txt', 'r').read())
 
         if not detection.detected:
             continue
@@ -399,9 +397,7 @@ async def ws_voice(request):
             await ws.send_str(f"CART:{json.dumps(cart)}")
 
             print("Voice output process...")
-            tts = gTTS(output_text, lang='ko', lang_check=False)
-            tts.save("temp.mp3")
-            await async_play("temp.mp3")
+            await async_tts(output_text)
 
     return ws
 
