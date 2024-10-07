@@ -8,6 +8,7 @@ from playsound import playsound
 from gtts import gTTS
 from google.cloud import speech
 from gcloud_stt import ResumableMicrophoneStream
+from gcloud_tts import synthesis
 from langchain_openai import ChatOpenAI
 from langchain.tools import tool
 from langchain.agents import initialize_agent, AgentType
@@ -261,6 +262,8 @@ async def ws_prod(request):
     return ws
 
 async def ws_voice(request):
+    global detected_this_session
+
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     print(ws.status)
@@ -269,7 +272,7 @@ async def ws_voice(request):
         result_future = asyncio.Future()
 
         def threaded_play(text):
-            
+            synthesis(text)
             playsound("temp.mp3")
             os.remove("temp.mp3")
             ws._loop.call_soon_threadsafe(result_future.set_result, 0)
