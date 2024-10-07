@@ -17,7 +17,7 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from aiohttp import web
 from frontend_data import Screen
-#from person_detector import PersonDetection
+from person_detector import PersonDetection
 
 load_dotenv()
 
@@ -47,8 +47,8 @@ except:
 cart: dict[str, int] = {}
 products = []
 screen = Screen()
-#detection = PersonDetection()
-#detection.start()
+detection = PersonDetection()
+detection.start()
 
 @tool
 def view_menu() -> str:
@@ -269,8 +269,7 @@ async def ws_voice(request):
         result_future = asyncio.Future()
 
         def threaded_play(text):
-            tts = gTTS(text, lang='ko', lang_check=False)
-            tts.save("temp.mp3")
+            
             playsound("temp.mp3")
             os.remove("temp.mp3")
             ws._loop.call_soon_threadsafe(result_future.set_result, 0)
@@ -341,16 +340,16 @@ async def ws_voice(request):
         return await result_future
 
     while not ws.closed:
-        #await detection.detect()
+        await detection.detect()
         
-        #if detection.detected and not detected_this_session:
-        #    logger.warning("Face detected!")
-        #    detected_this_session = True
+        if detection.detected and not detected_this_session:
+            logger.warning("Face detected!")
+            detected_this_session = True
 
-        #    await async_tts(open('prompts/welcome.txt', 'r').read())
+            await async_tts(open('prompts/welcome.txt', 'r').read())
 
-        #if not detection.detected:
-        #    continue
+        if not detection.detected:
+            continue
 
         playsound("sfx/start_rec.wav", block=False)
         text: str = await transcribe_async()
