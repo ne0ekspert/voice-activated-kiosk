@@ -134,6 +134,9 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
     if name not in map(lambda x: x['name'], products):
         return "존재하지 않는 메뉴입니다"
     
+    if quantity <= 0:
+        return f"수량을 0 이하로 바꾸는 것은 지원하지 않습니다. `remove_item_from_cart` 툴을 사용하세요."
+    
     if name in cart.keys():
         cart[name] = quantity
         return f"{name}의 개수를 {quantity}로 변경했습니다"
@@ -149,7 +152,7 @@ def remove_item_from_cart(name: str) -> str:
         name (str): 장바구니에서 제거할 항목의 이름
 
     Returns:
-        str: Confirmation message indicating whether the item was successfully removed.
+        str: Confirmation message indecating whether the item was successfully removed.
     """
 
     screen.set_id("/order")
@@ -174,11 +177,11 @@ def pay_with_cash():
         None
 
     Returns:
-        None
+        str: Confirmation message indecating the screen has changed
     """
     screen.set_id("/payment/cash")
 
-    return
+    return "현금 결제 화면으로 변경되었습니다."
 
 @tool
 def pay_with_card():
@@ -190,11 +193,11 @@ def pay_with_card():
         None
 
     Returns:
-        None
+        str: Confirmation message indecating the screen has changed
     """
     screen.set_id("/payment/card")
 
-    return
+    return "카드 결제 화면으로 변경되었습니다."
 
 tools = [
     view_menu,
