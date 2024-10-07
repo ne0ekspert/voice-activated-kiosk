@@ -341,16 +341,16 @@ async def ws_voice(request):
         return await result_future
 
     while not ws.closed:
-        await detection.detect()
+        #await detection.detect()
         
-        if detection.detected and not detected_this_session:
-            logger.warning("Face detected!")
-            detected_this_session = True
+        #if detection.detected and not detected_this_session:
+        #    logger.warning("Face detected!")
+        #    detected_this_session = True
 
-            await async_tts(open('prompts/welcome.txt', 'r').read())
+        #    await async_tts(open('prompts/welcome.txt', 'r').read())
 
-        if not detection.detected:
-            continue
+        #if not detection.detected:
+        #    continue
 
         playsound("sfx/start_rec.wav", block=False)
         text: str = await transcribe_async()
@@ -362,7 +362,7 @@ async def ws_voice(request):
             while True:
                 response = conversation.invoke(
                     {'input': text},
-                    config={"configurable": {"session_id": "test-session"}}
+                    {"configurable": {"session_id": "test-session"}}
                 )
                 print(text)
 
