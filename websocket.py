@@ -416,6 +416,13 @@ async def ws_nfc(request):
             try:
                 for target in n.poll():
                     ws._loop.call_soon_threadsafe(result_future.set_result, target)
+                    response = conversation.invoke(
+                        {'input': SystemMessage('NFC payment success')},
+                        {'configurable': {'session_id': 'test-session'}}
+                    )
+                    synthesis(response['output'])
+                    playsound("temp.mp3")
+                    os.remove("temp.mp3")
                     return
             except Exception as e:
                 ws._loop.call_soon_threadsafe(result_future.set_exception, e)
@@ -429,7 +436,7 @@ async def ws_nfc(request):
     while not ws.closed:
         try:
             target = await read_tag_async()
-            store['test-session'].add_message(SystemMessage(content="NFC payment success"))
+            
             await ws.send_str(target.uid.hex())
         except:
             pass
