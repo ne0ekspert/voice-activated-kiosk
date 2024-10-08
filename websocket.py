@@ -108,7 +108,21 @@ def add_item_to_cart(name: str, quantity=1) -> str:
     else:
         cart[name] = quantity
 
-    return f"{name} {quantity}개를 장바구니에 추가했습니다"
+    res = ""
+    res += f"{name} {quantity}를 장바구니에 추가했습니다.\n"
+    res += "장바구니:\n"
+
+    for k, v in cart.items():
+        price = 0
+        for product in products:
+            if product['name'] == k:
+                price = product['price']
+        res += f"{k} {v}개 = {price * v}\n"
+        total += price * v
+    
+    res += f"합계 = {total}"
+
+    return res
 
 @tool
 def change_quantity_from_cart(name: str, quantity: int) -> str:
@@ -133,7 +147,21 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
     
     if name in cart.keys():
         cart[name] = quantity
-        return f"{name}의 개수를 {quantity}로 변경했습니다"
+        res = ""
+        res += f"{name}의 개수를 {quantity}로 변경했습니다.\n"
+        res += "장바구니:\n"
+
+        for k, v in cart.items():
+            price = 0
+            for product in products:
+                if product['name'] == k:
+                    price = product['price']
+            res += f"{k} {v}개 = {price * v}\n"
+            total += price * v
+        
+        res += f"합계 = {total}"
+        
+        return res
     else:
         return f"장바구니에서 {name}을 찾을 수 없습니다"
 
@@ -141,6 +169,7 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
 def remove_item_from_cart(name: str) -> str:
     """
     장바구니에서 항목을 제거합니다.
+    특정 수량만큼 삭제하려면 `change_quantity_from_cart` 툴을 사용하세요.
 
     Args:
         name (str): 장바구니에서 제거할 항목의 이름
@@ -157,7 +186,22 @@ def remove_item_from_cart(name: str) -> str:
     removed_item = cart.pop(name, None)
 
     if removed_item:
-        return f"{name}를 장바구니에서 제거했습니다"
+        total = 0
+        res = ""
+        res += f"{name}를 장바구니에서 제거했습니다.\n"
+        res += "장바구니:\n"
+
+        for k, v in cart.items():
+            price = 0
+            for product in products:
+                if product['name'] == k:
+                    price = product['price']
+            res += f"{k} {v}개 = {price * v}\n"
+            total += price * v
+        
+        res += f"합계 = {total}"
+
+        return res
     else:
         return f"장바구니에서 {name}을 찾을 수 없습니다"
 
