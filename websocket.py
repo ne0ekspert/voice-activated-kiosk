@@ -3,9 +3,9 @@ import json
 import asyncio
 import logging
 import threading
+import pynfc
 from dotenv import load_dotenv
 from playsound import playsound
-from gtts import gTTS
 from google.cloud import speech
 from gcloud_stt import ResumableMicrophoneStream
 from gcloud_tts import synthesis
@@ -38,12 +38,6 @@ config = speech.RecognitionConfig(
 streaming_config = speech.StreamingRecognitionConfig(
     config=config, interim_results=True
 )
-
-try:
-    import pynfc
-    n = pynfc.Nfc("pn532_i2c:/dev/i2c-1")
-except:
-    n = None
 
 cart: dict[str, int] = {}
 products = []
@@ -146,7 +140,7 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
 @tool
 def remove_item_from_cart(name: str) -> str:
     """
-    장바구니에서 항목을 하나 제거합니다.
+    장바구니에서 항목을 제거합니다.
 
     Args:
         name (str): 장바구니에서 제거할 항목의 이름
@@ -239,7 +233,7 @@ conversation = RunnableWithMessageHistory(
 detected_this_session = False
 
 async def ws_prod(request):
-    global cart, products, detected_this_session
+    global cart, products, detected_this_session, nfc_lock
 
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -258,6 +252,7 @@ async def ws_prod(request):
                 cart = dict()
                 store.pop("test-session")
                 detected_this_session = False
+                nfc_lock = False
                 print(f"Kiosk Reset")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
@@ -292,7 +287,11 @@ async def ws_voice(request):
             async def threaded_listen():
                 mic_manager = ResumableMicrophoneStream(SAMPLE_RATE, SAMPLE_RATE // 10)
 
-                await ws.send_str('!!!')
+                try:
+                    await ws.send_str('!!!')
+                except Exception as e:
+                    ws._loop.call_soon_threadsafe(result_future.set_exception, e)
+                    return
                 
                 try:
                     with mic_manager as stream:
@@ -326,7 +325,7 @@ async def ws_voice(request):
                                     try:
                                         ws._loop.call_soon_threadsafe(result_future.set_result, transcript)
                                     except asyncio.exceptions.InvalidStateError:
-                                        return
+                                        continue
                                     return
                                 
                 except Exception as e:
@@ -339,8 +338,7 @@ async def ws_voice(request):
             loop.run_until_complete(threaded_listen())
             loop.close()
 
-        listener_thread = threading.Thread(target=threaded_listen_middle)
-        listener_thread.daemon = True
+        listener_thread = threading.Thread(target=threaded_listen_middle, daemon=True)
         listener_thread.start()
         
         return await result_future
@@ -401,32 +399,56 @@ async def ws_voice(request):
             await ws.send_str(f"RES:{output_text}")
             await ws.send_str(f"CART:{json.dumps(cart)}")
 
+            if ws.closed:
+                break
+
             print("Voice output process...")
             await async_tts(output_text)
 
     return ws
 
 async def ws_nfc(request):
+    global n
     ws = web.WebSocketResponse()
     await ws.prepare(request)
 
     async def read_tag_async():
+        global n
+        
         result_future = asyncio.Future()
+
         def threaded_read_tag():
+            global n
+
             try:
                 for target in n.poll():
+                    total = 0
+
+                    for k, v in cart.items():
+                        price = 0
+                        for product in products:
+                            if product['name'] == k:
+                                price = product['price']
+                        total += price * v
+
                     ws._loop.call_soon_threadsafe(result_future.set_result, target)
                     response = conversation.invoke(
-                        {'input': SystemMessage('NFC payment success')},
+                        {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\nNFC payment success')},
                         {'configurable': {'session_id': 'test-session'}}
                     )
+                    
                     synthesis(response['output'])
-                    playsound("temp.mp3")
+                    playsound("temp.mp3", block=False)
                     os.remove("temp.mp3")
-                    return
+
+                    break
+
             except Exception as e:
+                logger.error(e)
                 ws._loop.call_soon_threadsafe(result_future.set_exception, e)
-                return
+
+            del n
+            return
 
         read_tag_thread = threading.Thread(target=threaded_read_tag, daemon=True)
         read_tag_thread.start()
@@ -435,10 +457,14 @@ async def ws_nfc(request):
 
     while not ws.closed:
         try:
-            target = await read_tag_async()
-            
-            await ws.send_str(target.uid.hex())
-        except:
-            pass
+            if 'n' not in globals():
+                n = pynfc.Nfc("pn532_i2c:/dev/i2c-1")
 
+                target = await read_tag_async()
+            
+                await ws.send_str(target.uid.hex())
+                break
+        except Exception as e:
+            await ws.send_str("6687464507465245")
+            break
     return ws
