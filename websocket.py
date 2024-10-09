@@ -108,6 +108,8 @@ def add_item_to_cart(name: str, quantity=1) -> str:
     else:
         cart[name] = quantity
 
+    total = 0
+
     res = ""
     res += f"{name} {quantity}를 장바구니에 추가했습니다.\n"
     res += "장바구니:\n"
@@ -219,7 +221,7 @@ def pay_with_cash():
     """
     screen.set_id("/payment/cash")
 
-    return "현금 결제 화면으로 변경되었습니다."
+    return "현금 결제 화면으로 변경되었습니다. 현금 결제를 계속할 직원을 호출하였습니다."
 
 @tool
 def pay_with_card():
@@ -235,7 +237,7 @@ def pay_with_card():
     """
     screen.set_id("/payment/card")
 
-    return "카드 결제 화면으로 변경되었습니다."
+    return "카드 결제 화면으로 변경되었습니다. 결제를 기다리는 중입니다..."
 
 tools = [
     view_menu,
