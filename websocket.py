@@ -262,6 +262,11 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
         store[session_id] = InMemoryChatMessageHistory()
         store[session_id].add_message(system_message)
         store[session_id].add_message(welcome_message)
+    elif store[session_id].messages[0] != system_message:
+        store[session_id] = InMemoryChatMessageHistory()
+        store[session_id].add_message(system_message)
+        store[session_id].add_message(welcome_message)
+
     return store[session_id]
 
 llm = ChatOpenAI(model="gpt-4o-mini")
@@ -276,10 +281,11 @@ conversation = RunnableWithMessageHistory(
     get_session_history
 )
 
+voice_restart = False
 detected_this_session = False
 
 async def ws_prod(request):
-    global cart, products, detected_this_session, nfc_lock
+    global cart, products, detected_this_session, nfc_lock, voice_restart
 
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -299,6 +305,7 @@ async def ws_prod(request):
                 store.pop("test-session")
                 detected_this_session = False
                 nfc_lock = False
+                voice_restart = True
                 print(f"Kiosk Reset")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
@@ -345,10 +352,18 @@ async def ws_voice(request):
                             stream.audio_input = []
                             audio_generator = stream.generator()
 
+                            if voice_restart:
+                                ws._loop.call_soon_threadsafe(result_future.set_result, "")
+                                return
+
                             requests = (
                                 speech.StreamingRecognizeRequest(audio_content=content)
                                 for content in audio_generator
                             )
+
+                            if voice_restart:
+                                ws._loop.call_soon_threadsafe(result_future.set_result, "")
+                                return
 
                             responses = client.streaming_recognize(streaming_config, requests)
 
