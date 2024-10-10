@@ -24,7 +24,7 @@ load_dotenv()
 
 logger = logging.Logger(__name__)
 
-SAMPLE_RATE = 16000
+SAMPLE_RATE = 44100
 client = speech.SpeechClient()
 config = speech.RecognitionConfig(
     encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -34,9 +34,8 @@ config = speech.RecognitionConfig(
     model="latest_short",
     max_alternatives=1,
 )
-
 streaming_config = speech.StreamingRecognitionConfig(
-    config=config, interim_results=True
+    config=config, interim_results=True, single_utterance=True,
 )
 
 cart: dict[str, int] = {}
@@ -111,7 +110,7 @@ def add_item_to_cart(name: str, quantity=1) -> str:
     total = 0
 
     res = ""
-    res += f"{name} {quantity}를 장바구니에 추가했습니다.\n"
+    res += f"{name} {quantity}개를 장바구니에 추가했습니다.\n"
     res += "장바구니:\n"
 
     for k, v in cart.items():
@@ -152,6 +151,8 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
         res = ""
         res += f"{name}의 개수를 {quantity}로 변경했습니다.\n"
         res += "장바구니:\n"
+
+        total = 0
 
         for k, v in cart.items():
             price = 0
@@ -269,7 +270,7 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
 
     return store[session_id]
 
-llm = ChatOpenAI(model="gpt-4o-mini")
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4)
 agent = initialize_agent(
     tools=tools,
     llm=llm,
@@ -285,7 +286,7 @@ voice_restart = False
 detected_this_session = False
 
 async def ws_prod(request):
-    global cart, products, detected_this_session, nfc_lock, voice_restart
+    global cart, products, detected_this_session, nfc_lock, payment
 
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -305,15 +306,17 @@ async def ws_prod(request):
                 store.pop("test-session")
                 detected_this_session = False
                 nfc_lock = False
-                voice_restart = True
+                payment = None
                 print(f"Kiosk Reset")
         elif msg.type == web.WSMsgType.ERROR:
             print(f"Error: {msg.data}")
 
     return ws
 
+payment = None
+
 async def ws_voice(request):
-    global detected_this_session
+    global detected_this_session, payment
 
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -338,6 +341,7 @@ async def ws_voice(request):
 
         def threaded_listen_middle():
             async def threaded_listen():
+                global payment
                 mic_manager = ResumableMicrophoneStream(SAMPLE_RATE, SAMPLE_RATE // 10)
 
                 try:
@@ -348,26 +352,22 @@ async def ws_voice(request):
                 
                 try:
                     with mic_manager as stream:
-                        while not stream.closed:
+                        while not stream.closed and not ws.closed:
                             stream.audio_input = []
                             audio_generator = stream.generator()
-
-                            if voice_restart:
-                                ws._loop.call_soon_threadsafe(result_future.set_result, "")
-                                return
 
                             requests = (
                                 speech.StreamingRecognizeRequest(audio_content=content)
                                 for content in audio_generator
                             )
 
-                            if voice_restart:
-                                ws._loop.call_soon_threadsafe(result_future.set_result, "")
-                                return
-
                             responses = client.streaming_recognize(streaming_config, requests)
 
                             for response in responses:
+                                if payment:
+                                    ws._loop.call_soon_threadsafe(result_future.set_result, "")
+                                    return
+
                                 if not response.results:
                                     continue
 
@@ -406,7 +406,7 @@ async def ws_voice(request):
 
     while not ws.closed:
         await detection.detect()
-        
+
         if detection.detected and not detected_this_session:
             logger.warning("Face detected!")
             detected_this_session = True
@@ -469,7 +469,7 @@ async def ws_voice(request):
     return ws
 
 async def ws_nfc(request):
-    global n
+    global n, payment
     ws = web.WebSocketResponse()
     await ws.prepare(request)
 
@@ -494,7 +494,7 @@ async def ws_nfc(request):
 
                     ws._loop.call_soon_threadsafe(result_future.set_result, target)
                     response = conversation.invoke(
-                        {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\nNFC payment success')},
+                        {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\nNFC 결제 성공')},
                         {'configurable': {'session_id': 'test-session'}}
                     )
                     
@@ -515,6 +515,8 @@ async def ws_nfc(request):
         read_tag_thread.start()
 
         return await result_future
+    
+    payment = ws._loop.create_future()
 
     while not ws.closed:
         try:
@@ -528,4 +530,6 @@ async def ws_nfc(request):
         except Exception as e:
             await ws.send_str("6687464507465245")
             break
+
+    payment.set_result(0)
     return ws
