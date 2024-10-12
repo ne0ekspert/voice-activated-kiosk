@@ -314,5 +314,18 @@ def main() -> None:
                 sys.stdout.write("\n")
             stream.new_stream = True
 
+speech_client = speech.SpeechClient()
+speech_config = speech.RecognitionConfig(
+    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+    sample_rate_hertz=SAMPLE_RATE,
+    language_code="ko-KR",
+    enable_automatic_punctuation=True,
+    model="latest_short",
+    max_alternatives=1,
+)
+streaming_config = speech.StreamingRecognitionConfig(
+    config=speech_config, interim_results=True, single_utterance=True,
+)
+
 if __name__ == "__main__":
     main()
