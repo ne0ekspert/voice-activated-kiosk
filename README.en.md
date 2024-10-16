@@ -25,7 +25,7 @@ It supports users to order and pay for food conveniently by using a screen imple
 1. Clone the project. `git clone --recursive https://github.com/ne0ekspert/voice-activated-kiosk.git`
 2. Install the required libraries. pip install -r requirements.txt`
 3. Run the server with the command `python main.py`.
-4. navigate to the address `http://localhost:80` in your web browser.
+4. navigate to the address `http://localhost:8080` in your web browser.
 
 ## How to use
 
