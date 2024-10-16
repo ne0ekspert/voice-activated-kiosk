@@ -43,37 +43,37 @@ Idle screen
 
 ![Idle Screen](./docs/main.png)
 
----]
+---
 
 Order Screen
 
 ![Order Screen](./docs/order.png)
 
---- Order Screen
+--- 
 
 Order Selected Screen
 
 ![Order Screen with Items](./docs/order-selected.png)
 
---- Payment
+--- 
 
 Payment Selection Screen
 
 ![Payment Selection Screen](./docs/payment.png)
 
---- Payment Selection Screen
+---
 
 Card Payment Screen
 
 ![Card Payment Screen](./docs/payment-card.png)
 
---- Card Payment Success Screen
+---
 
 Card Payment Success Screen
 
 ![Card Payment Success Screen](./docs/payment-card-success.png)
 
---- Cash Payment Screen
+---
 
 Cash Payment Screen
 
