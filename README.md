@@ -44,25 +44,37 @@ React.js로 구현된 화면과 Python 및 ChatGPT 기반 **음성 인식 및 �
 
 ![Idle Screen](./docs/main.png)
 
+---
+
 주문 화면
 
 ![Order Screen](./docs/order.png)
+
+---
 
 주문 선택한 화면
 
 ![Order Screen with Items](./docs/order-selected.png)
 
+---
+
 결제 선택 화면
 
 ![Payment Selection Screen](./docs/payment.png)
+
+---
 
 카드 결제 화면
 
 ![Card Payment Screen](./docs/payment-card.png)
 
+---
+
 카드 결제 성공 화면
 
 ![Card Payment Success Screen](./docs/payment-card-success.png)
+
+---
 
 현금 결제 화면
 
