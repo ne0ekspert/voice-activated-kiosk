@@ -30,9 +30,9 @@ def view_cart() -> str:
     total = 0
 
     res = ""
-    for k, v in cart.items():
+    for k, v in cart.items.items():
         price = 0
-        for product in products:
+        for product in products.items:
             if product['name'] == k:
                 price = product['price']
         res += f"{k} {v}개 = {price * v}\n"
@@ -57,13 +57,13 @@ def add_item_to_cart(name: str, quantity=1) -> str:
 
     screen.set_id("/order")
 
-    if name not in map(lambda x: x['name'], products):
+    if name not in map(lambda x: x['name'], products.items):
         return f"No such menu named as {name}"
 
-    if name in cart:
-        cart[name] += quantity
+    if name in cart.items:
+        cart.items[name] += quantity
     else:
-        cart[name] = quantity
+        cart.items[name] = quantity
 
     total = 0
 
@@ -71,9 +71,9 @@ def add_item_to_cart(name: str, quantity=1) -> str:
     res += f"{name} {quantity}개를 장바구니에 추가했습니다.\n"
     res += "장바구니:\n"
 
-    for k, v in cart.items():
+    for k, v in cart.items.items():
         price = 0
-        for product in products:
+        for product in products.items:
             if product['name'] == k:
                 price = product['price']
         res += f"{k} {v}개 = {price * v}\n"
@@ -98,23 +98,23 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
 
     screen.set_id("/order")
 
-    if name not in map(lambda x: x['name'], products):
+    if name not in map(lambda x: x['name'], products.items):
         return "존재하지 않는 메뉴입니다"
     
     if quantity <= 0:
         return f"수량을 0 이하로 바꾸는 것은 지원하지 않습니다. `remove_item_from_cart` 툴을 사용하세요."
     
-    if name in cart.keys():
-        cart[name] = quantity
+    if name in cart.items.keys():
+        cart.items[name] = quantity
         res = ""
         res += f"{name}의 개수를 {quantity}로 변경했습니다.\n"
         res += "장바구니:\n"
 
         total = 0
 
-        for k, v in cart.items():
+        for k, v in cart.items.items():
             price = 0
-            for product in products:
+            for product in products.items:
                 if product['name'] == k:
                     price = product['price']
             res += f"{k} {v}개 = {price * v}\n"
@@ -141,10 +141,10 @@ def remove_item_from_cart(name: str) -> str:
 
     screen.set_id("/order")
 
-    if name not in map(lambda x: x['name'], products):
+    if name not in map(lambda x: x['name'], products.items):
         return "존재하지 않는 메뉴입니다"
     
-    removed_item = cart.pop(name, None)
+    removed_item = cart.items.pop(name, None)
 
     if removed_item:
         total = 0
@@ -152,9 +152,9 @@ def remove_item_from_cart(name: str) -> str:
         res += f"{name}를 장바구니에서 제거했습니다.\n"
         res += "장바구니:\n"
 
-        for k, v in cart.items():
+        for k, v in cart.items.items():
             price = 0
-            for product in products:
+            for product in products.items:
                 if product['name'] == k:
                     price = product['price']
             res += f"{k} {v}개 = {price * v}\n"
