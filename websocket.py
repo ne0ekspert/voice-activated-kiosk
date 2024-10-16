@@ -1,3 +1,4 @@
+from ast import Break
 import os
 import json
 import asyncio
@@ -12,7 +13,7 @@ from gcloud_tts import synthesis
 from langchain.schema import SystemMessage
 from langchain_core.messages import ToolMessage
 from aiohttp import web
-from data import *
+from data import cart, products, screen
 from agent import conversation, store
 import tools
 
@@ -26,7 +27,7 @@ voice_restart = False
 detected_this_session = False
 
 async def ws_prod(request):
-    global cart, products, detected_this_session, nfc_lock, payment
+    global detected_this_session, nfc_lock, payment
 
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -35,14 +36,14 @@ async def ws_prod(request):
     async for msg in ws:
         if msg.type == web.WSMsgType.TEXT:
             if msg.data.startswith("cart:"):
-                cart = json.loads(msg.data[5:])
+                cart.items = json.loads(msg.data[5:])
                 print(f"Cart data updated: {cart}")
             elif msg.data.startswith("prod:"):
-                products = json.loads(msg.data[5:])
+                products.items = json.loads(msg.data[5:])
             elif msg.data.startswith("disp:"):
                 print(f"Screen ID: {msg.data[5:]}")
             elif msg.data == "RESET":
-                cart = dict()
+                cart.items = dict()
                 store.pop("test-session")
                 detected_this_session = False
                 nfc_lock = False
@@ -205,10 +206,10 @@ async def ws_voice(request):
                     break
 
             print(f"Response from Model: {output_text}")
-            await ws.send_str(f"RES:{output_text}")
-            await ws.send_str(f"CART:{json.dumps(cart)}")
-
-            if ws.closed:
+            try:
+                await ws.send_str(f"RES:{output_text}")
+                await ws.send_str(f"CART:{json.dumps(cart)}")
+            except:
                 break
 
             print("Voice output process...")
@@ -227,6 +228,8 @@ async def ws_nfc(request):
         result_future = asyncio.Future()
 
         def threaded_read_tag():
+            assert ws._loop is not None
+            
             global n
 
             try:
@@ -276,7 +279,10 @@ async def ws_nfc(request):
                 await ws.send_str(target.uid.hex())
                 break
         except Exception as e:
-            await ws.send_str("6687464507465245")
+            try:
+                await ws.send_str("6687464507465245")
+            except Exception as e:
+                break
             break
 
     payment.set_result(0)

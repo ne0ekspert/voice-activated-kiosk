@@ -24,7 +24,7 @@ class PersonDetection():
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
     async def detect(self):
-        mp_face_mesh = mp.solutions.face_mesh
+        mp_face_mesh = mp.solutions.face_mesh # type: ignore
 
         with mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5) as face_mesh:
             image = self.camera.capture_image()
@@ -45,9 +45,9 @@ class PersonDetection():
             await asyncio.sleep(0.01)
 
     def draw_nearest_face(self, image, results):
-        mp_face_mesh = mp.solutions.face_mesh
-        mp_drawing = mp.solutions.drawing_utils
-        mp_drawing_styles = mp.solutions.drawing_styles
+        mp_face_mesh = mp.solutions.face_mesh # type: ignore
+        mp_drawing = mp.solutions.drawing_utils # type: ignore
+        mp_drawing_styles = mp.solutions.drawing_styles # type: ignore
         
         if image is not None and results.multi_face_landmarks:
             annotated_image = image.copy()
