@@ -84,7 +84,7 @@ def add_item_to_cart(name: str, quantity=1) -> str:
     return res
 
 @tool
-def change_quantity_from_cart(name: str, quantity: int) -> str:
+def change_quantity_from_cart(name: str, target_quantity: int) -> str:
     """
     장바구니의 한 가지 항목의 수량을 바꿉니다.
 
@@ -101,13 +101,13 @@ def change_quantity_from_cart(name: str, quantity: int) -> str:
     if name not in map(lambda x: x['name'], products.items):
         return "존재하지 않는 메뉴입니다"
     
-    if quantity <= 0:
+    if target_quantity <= 0:
         return f"수량을 0 이하로 바꾸는 것은 지원하지 않습니다. `remove_item_from_cart` 툴을 사용하세요."
     
     if name in cart.items.keys():
-        cart.items[name] = quantity
+        cart.items[name] = target_quantity
         res = ""
-        res += f"{name}의 개수를 {quantity}로 변경했습니다.\n"
+        res += f"{name}의 개수를 {target_quantity}로 변경했습니다.\n"
         res += "장바구니:\n"
 
         total = 0
