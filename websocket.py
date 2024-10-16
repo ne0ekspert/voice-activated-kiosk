@@ -271,7 +271,7 @@ async def ws_nfc(request):
                 target = await read_tag_async()
 
                 response = await conversation.ainvoke(
-                    {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\nNFC 결제 성공')},
+                    {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\n카드 결제 성공')},
                     {'configurable': {'session_id': 'test-session'}}
                 )
                 
@@ -282,12 +282,12 @@ async def ws_nfc(request):
         except Exception as e:
             try:
                 response = await conversation.ainvoke(
-                    {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\nNFC 결제 성공')},
+                    {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\n카드 결제 성공')},
                     {'configurable': {'session_id': 'test-session'}}
                 )
                 
                 synthesis(response['output'])
-                
+
                 await ws.send_str("6687464507465245")
             except Exception as e:
                 break
