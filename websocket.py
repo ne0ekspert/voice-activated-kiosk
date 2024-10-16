@@ -234,22 +234,8 @@ async def ws_nfc(request):
 
             try:
                 for target in n.poll():
-                    total = 0
-
-                    for k, v in cart.items.items():
-                        price = 0
-                        for product in products.items:
-                            if product['name'] == k:
-                                price = product['price']
-                        total += price * v
-
                     ws._loop.call_soon_threadsafe(result_future.set_result, target)
-                    response = conversation.invoke(
-                        {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\nNFC 결제 성공')},
-                        {'configurable': {'session_id': 'test-session'}}
-                    )
                     
-                    synthesis(response['output'])
                     playsound("temp.mp3", block=False)
                     os.remove("temp.mp3")
 
@@ -270,16 +256,38 @@ async def ws_nfc(request):
     payment = ws._loop.create_future()
 
     while not ws.closed:
+        total = 0
+        for k, v in cart.items.items():
+            price = 0
+            for product in products.items:
+                if product['name'] == k:
+                    price = product['price']
+            total += price * v
+
         try:
             if 'n' not in globals():
                 n = pynfc.Nfc("pn532_i2c:/dev/i2c-1")
 
                 target = await read_tag_async()
+
+                response = await conversation.ainvoke(
+                    {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\nNFC 결제 성공')},
+                    {'configurable': {'session_id': 'test-session'}}
+                )
+                
+                synthesis(response['output'])
             
                 await ws.send_str(target.uid.hex())
                 break
         except Exception as e:
             try:
+                response = await conversation.ainvoke(
+                    {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\nNFC 결제 성공')},
+                    {'configurable': {'session_id': 'test-session'}}
+                )
+                
+                synthesis(response['output'])
+                
                 await ws.send_str("6687464507465245")
             except Exception as e:
                 break
