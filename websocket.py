@@ -173,7 +173,7 @@ async def ws_voice(request):
             await ws.send_str('...')
 
             while True:
-                response = conversation.invoke(
+                response = await conversation.ainvoke(
                     {'input': text},
                     {"configurable": {"session_id": "test-session"}}
                 )
