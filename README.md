@@ -34,6 +34,53 @@ React.js로 구현된 화면과 Python 및 ChatGPT 기반 **음성 인식 및 �
 2. 음성 인식 결과 및 생성형 AI 대답을 확인합니다.
 3. NFC 카드를 리더에 터치하여 결제합니다. (ISO 14443 NFC로 학생증을 사용하여 결제 단계를 모방했습니다)
 
+## 스크린샷
+
+<details>
+
+<summary>펼치기</summary>
+
+대기 화면
+
+![Idle Screen](./docs/main.png)
+
+---
+
+주문 화면
+
+![Order Screen](./docs/order.png)
+
+---
+
+주문 선택한 화면
+
+![Order Screen with Items](./docs/order-selected.png)
+
+---
+
+결제 선택 화면
+
+![Payment Selection Screen](./docs/payment.png)
+
+---
+
+카드 결제 화면
+
+![Card Payment Screen](./docs/payment-card.png)
+
+---
+
+카드 결제 성공 화면
+
+![Card Payment Success Screen](./docs/payment-card-success.png)
+
+---
+
+현금 결제 화면
+
+![Cash Payment Screen](./docs/payment-cash.png)
+</details>
+
 ## 하드웨어
 
 TBD
