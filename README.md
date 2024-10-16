@@ -28,7 +28,7 @@ React.js로 구현된 화면과 Python 및 ChatGPT 기반 **음성 인식 및 �
 1. 프로젝트를 복제합니다. `git clone --recursive https://github.com/ne0ekspert/voice-activated-kiosk.git`
 2. 필요한 라이브러리를 설치합니다. `pip install -r requirements.txt`
 3. `python main.py` 명령어로 서버를 실행합니다.
-4. 웹 브라우저에서 `http://localhost:80` 주소로 이동합니다.
+4. 웹 브라우저에서 `http://localhost:8080` 주소로 이동합니다.
 
 ## 사용 방법
 
