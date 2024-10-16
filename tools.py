@@ -13,7 +13,7 @@ def view_menu() -> str:
 
     screen.set_id("/order")
 
-    return json.dumps(products, ensure_ascii=False)
+    return json.dumps(products.items, ensure_ascii=False)
 
 
 @tool
