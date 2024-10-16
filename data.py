@@ -1,4 +1,5 @@
 from person_detector import PersonDetection
+from aiohttp import web
 
 class Screen:
     def __init__(self):
