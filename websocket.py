@@ -208,7 +208,7 @@ async def ws_voice(request):
             print(f"Response from Model: {output_text}")
             try:
                 await ws.send_str(f"RES:{output_text}")
-                await ws.send_str(f"CART:{json.dumps(cart)}")
+                await ws.send_str(f"CART:{json.dumps(cart.items)}")
             except:
                 break
 
@@ -236,9 +236,9 @@ async def ws_nfc(request):
                 for target in n.poll():
                     total = 0
 
-                    for k, v in cart.items():
+                    for k, v in cart.items.items():
                         price = 0
-                        for product in products:
+                        for product in products.items:
                             if product['name'] == k:
                                 price = product['price']
                         total += price * v
