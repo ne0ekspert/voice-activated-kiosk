@@ -13,7 +13,7 @@ from gcloud_tts import synthesis
 from langchain.schema import SystemMessage
 from langchain_core.messages import ToolMessage
 from aiohttp import web
-from data import cart, products, screen
+from data import cart, products, screen, detection
 from agent import conversation, store
 import tools
 

@@ -1,9 +1,12 @@
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.agents import initialize_agent, AgentType
 from langchain.schema import SystemMessage, AIMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from tools import tools
+
+load_dotenv()
 
 system_message = SystemMessage(
     content=open('prompts/context.txt', 'r').read(),
