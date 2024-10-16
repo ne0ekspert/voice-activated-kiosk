@@ -90,7 +90,7 @@ def change_quantity_from_cart(name: str, target_quantity: int) -> str:
 
     Args:
         name (str): 장바구니에서 수량을 변경할 항목의 이름
-        quantity (int): 수량
+        target_quantity (int): 변경할 수량
         
     Returns:
         str: Confirmation message indicating whether the item was successfully changed.
