@@ -169,6 +169,9 @@ async def ws_voice(request):
         text: str = await transcribe_async()
         playsound("sfx/stop_rec.wav", block=False)
 
+        if ws.closed:
+            break
+
         if text != "":
             await ws.send_str('...')
 
@@ -255,43 +258,36 @@ async def ws_nfc(request):
     
     payment = ws._loop.create_future()
 
-    while not ws.closed:
-        total = 0
-        for k, v in cart.items.items():
-            price = 0
-            for product in products.items:
-                if product['name'] == k:
-                    price = product['price']
-            total += price * v
+    total = 0
+    for k, v in cart.items.items():
+        price = 0
+        for product in products.items:
+            if product['name'] == k:
+                price = product['price']
+        total += price * v
 
+    while not ws.closed:
         try:
             if 'n' not in globals():
                 n = pynfc.Nfc("pn532_i2c:/dev/i2c-1")
 
                 target = await read_tag_async()
 
-                response = await conversation.ainvoke(
-                    {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\n카드 결제 성공')},
-                    {'configurable': {'session_id': 'test-session'}}
-                )
-                
-                synthesis(response['output'])
-            
                 await ws.send_str(target.uid.hex())
                 break
         except Exception as e:
             try:
-                response = await conversation.ainvoke(
-                    {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\n카드 결제 성공')},
-                    {'configurable': {'session_id': 'test-session'}}
-                )
-                
-                synthesis(response['output'])
-
                 await ws.send_str("6687464507465245")
             except Exception as e:
                 break
             break
+        
+    response = conversation.invoke(
+        {'input': SystemMessage(f'Cart: {cart}\nTotal: {total}원\n카드 결제 성공')},
+        {'configurable': {'session_id': 'test-session'}}
+    )
+    
+    synthesis(response['output'])
 
     payment.set_result(0)
     return ws

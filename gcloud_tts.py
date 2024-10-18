@@ -1,3 +1,5 @@
+import os
+from playsound import playsound
 from google.cloud import texttospeech
 
 # Instantiates a client
@@ -15,6 +17,9 @@ def synthesis(text):
         input=synthesis_input, voice=voice, audio_config=audio_config
     )
 
-    with open("temp.mp3", "wb") as out:
+    with open("temp_nfc.mp3", "wb") as out:
         # Write the response to the output file.
         out.write(response.audio_content)
+
+    playsound("temp_nfc.mp3")
+    os.remove("temp_nfc.mp3")
