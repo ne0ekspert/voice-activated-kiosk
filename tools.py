@@ -196,7 +196,7 @@ def pay_with_card():
     """
     screen.set_id("/payment/card")
 
-    return "카드 결제 화면으로 변경되었습니다. 결제를 기다리는 중입니다..."
+    return "카드 결제 화면으로 변경되었습니다. \"오른손을 앞으로 뻗으면 있는 점자 위쪽에 카드를 대 주세요.\"를 설명하세요.\n결제를 기다리는 중입니다..."
 
 tools = [
     view_menu,
