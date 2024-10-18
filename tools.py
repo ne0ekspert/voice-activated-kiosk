@@ -52,7 +52,7 @@ def add_item_to_cart(name: str, quantity=1) -> str:
         quantity (int, optional): 추가할 항목의 개수, 자동으로 1로 설정됨.
 
     Returns:
-        str: Confirmation message indicating how many of the item were added.
+        str: 장바구니 목록과 가격 합
     """
 
     screen.set_id("/order")
