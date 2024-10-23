@@ -89,4 +89,4 @@ TBD
 
 ## 시연 영상
 
-TBD
+[유튜브에서 시청하기](https://www.youtube.com/watch?v=Tz12pwekxME)
