@@ -109,6 +109,8 @@ Cash Payment Screen
 | Ilshin Spray Paint Interior Self Matte Primer Sabi Black Silver | Black Matte | 2 | 1,880 | 3,000 | 6,760 |
 | Total ||||| 678,755 |
 
+* Materials required to run are in bold, materials not required to run but used in the project are in normal, and materials not used are in strikethrough.
+
 ## Demo Video
 
 [Watch on YouTube](https://www.youtube.com/watch?v=Tz12pwekxME)
