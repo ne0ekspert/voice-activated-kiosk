@@ -83,7 +83,7 @@ Cash Payment Screen
 
 ## Buy List
 
-| Product name | Size | Quantity | Unit price | Shipping cost | Amount |
+| Product name | Size | Quantity | Unit price (KRW) | Shipping cost (KRW) | Amount |
 |:----:|:----:|:-----|:-----|:-------|:-----|
 | Door Magnet Catch Latches Dampeners Furniture Push Stanchions + L-shaped | | 4 | 2,900 | 3,000 | 14,600 |
 | **Raspberry Pi 10.1-inch Touchscreen LCD Monitor** | 9.8 x 7.24 x 3(T) in | 1 | 210,000 | 0 | 210,100 |
@@ -107,6 +107,7 @@ Cash Payment Screen
 | Yeongil Spray Paint yellow spray paint | | 3 | 2,100 | 3,000 | 9,300 |
 | **Britz BA-R9 SoundBar Soundbar Speaker** | | 1 | 21,900 | 0 | 21,900 |
 | Ilshin Spray Paint Interior Self Matte Primer Sabi Black Silver | Black Matte | 2 | 1,880 | 3,000 | 6,760 |
+| Total ||||| 678,755 |
 
 ## Demo Video
 
