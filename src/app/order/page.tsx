@@ -1,5 +1,7 @@
+'use client';
 import Link from 'next/link';
-import MenuList from './MenuList';
+import { useCatalog } from '../context/catalogContext';
+import { useCart } from '../context/cartContext';
 
 interface MenuItem {
   id: number;
@@ -7,23 +9,25 @@ interface MenuItem {
   price: number;
 }
 
-async function fetchMenuItems(): Promise<MenuItem[]> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/items`, {
-    cache: 'no-store', // Ensures data is fetched on each request for fresh data
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch menu items');
-  }
-  return response.json();
-}
+export default function Menu() {
+  const items = useCatalog();
+  const { addToCart } = useCart();
 
-export default async function Menu() {
-  const items = await fetchMenuItems();
+  const handleAddToCart = (item: MenuItem) => {
+    addToCart({ ...item, quantity: 1 });
+  };
 
   return (
     <div>
       <h2>Menu</h2>
-      <MenuList items={items} />
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>
+            {item.name} - ${item.price}
+            <button onClick={() => handleAddToCart(item)}>Add to Cart</button>
+          </li>
+        ))}
+      </ul>
       <Link href='/checkout'>Continue to Checkout</Link>
     </div>
   );

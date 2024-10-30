@@ -10,7 +10,7 @@ type CartItem = {
 };
 
 type CartContextType = {
-  cart: CartItem[];
+  item: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: number) => void;
   clearCart: () => void;
@@ -43,7 +43,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, total }}>
+    <CartContext.Provider value={{ item: cart, addToCart, removeFromCart, clearCart, total }}>
       {children}
     </CartContext.Provider>
   );

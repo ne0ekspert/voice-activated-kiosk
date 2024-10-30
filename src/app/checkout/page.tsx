@@ -20,12 +20,12 @@ export default function Checkout() {
   return (
     <div>
       <h2>Checkout</h2>
-      {cart.cart.length === 0 ? (
+      {cart.item.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
         <div>
           <ul>
-            {cart.cart.map((item) => (
+            {cart.item.map((item) => (
               <li key={item.id}>
                 {item.name} x {item.quantity} - ${item.price * item.quantity}
                 <button onClick={() => cart.removeFromCart(item.id)}>Remove</button>
