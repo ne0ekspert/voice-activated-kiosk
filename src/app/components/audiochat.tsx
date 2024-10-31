@@ -134,15 +134,15 @@ const AudioChat: React.FC = () => {
           const menu = catalog.find(menu => menu.name === item.name);
           
           if (!menu) {
-              console.error(`Menu item ${item.name} not found.`);
-              continue; // Skip this item
+            console.error(`Menu item ${item.name} not found.`);
+            continue; // Skip this item
           }
 
           try {
-              cart.addToCart({...menu, quantity: item.quantity});
-              addedItems.push({...menu, quantity: item.quantity});
+            cart.addToCart({...menu, quantity: item.quantity});
+            addedItems.push({...menu, quantity: item.quantity});
           } catch (error) {
-              console.error(`Failed to add ${item.name} to the cart:`, error);
+            console.error(`Failed to add ${item.name} to the cart:`, error);
           }
         }
 
@@ -150,10 +150,58 @@ const AudioChat: React.FC = () => {
       }
     );
 
+    // 수량 변경 툴
+    client.addTool(
+      {
+        name: 'change_quantity',
+        description: "Add items to user's cart",
+        parameters: {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: {
+                    type: 'number',
+                    description: "Item ID in the cart"
+                  },
+                  quantity: {
+                    type: 'number',
+                    description: "Item's new quantity"
+                  },
+                },
+                required: ['id', 'quantity'],
+              },
+            },
+          },
+          required: ['items'],
+        },
+      },
+      async ({ items }: { items: { id: number; quantity: number }[] }) => {
+        const changedItems = [];
+
+        for (const item of items) {
+
+          console.log(`Adding ${item.quantity} of ${cart.item[item.id]} to the cart`);
+          
+          try {
+            cart.changeItemQuantity(item.id, item.quantity);
+            changedItems.push({...cart.item[item.id], quantity: item.quantity});
+          } catch (error) {
+            console.error(`Failed to add ${cart.item[item.id]} to the cart:`, error);
+          }
+        }
+
+        return { status: 'success', addedItems: changedItems };
+      }
+    );
+
     // handle realtime events from client + server for event logging
     client.on('realtime.event', (realtimeEvent: RealtimeEvent) => {
     });
-    client.on('error', (event: any) => console.error(event));
+    client.on('error', (event) => console.error(event));
     client.on('conversation.interrupted', async () => {
       const trackSampleOffset = await wavStreamPlayer.interrupt();
       if (trackSampleOffset?.trackId) {
