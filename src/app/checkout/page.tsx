@@ -10,7 +10,7 @@ export default function Checkout() {
   const handleCheckout = async () => {
     const response = await fetch('/api/order', {
       method: 'POST',
-      body: JSON.stringify({ items: [{ id: 1, quantity: 2 }] }), // Example order
+      body: JSON.stringify({ items: cart.item }), // Example order
       headers: { 'Content-Type': 'application/json' },
     });
     const data = await response.json();
