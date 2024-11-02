@@ -64,11 +64,16 @@ const AudioChat: React.FC = () => {
   // Realtime API 클라이언트 설정
   useEffect(() => {
     const client = clientRef.current;
-    const wavStreamPlayer = wavStreamPlayerRef.current;
 
-    client.updateSession({ instructions: 'You are a shop assistant.' });
     client.updateSession({
+      instructions: '당신은 주문을 받는 점원입니다.',
       turn_detection: { type: 'server_vad' },
+    });
+
+    const existingTools = Object.keys(client.tools) || [];
+    console.log(existingTools);
+    existingTools.map(tool => {
+      client.removeTool(tool);
     });
 
     // 메뉴 확인 툴
@@ -127,7 +132,9 @@ const AudioChat: React.FC = () => {
         },
       },
       async ({ items }: { items: { name: string; quantity: number }[] }) => {
-        const addedItems = [];
+        console.log(catalog);
+
+        const addedItems: { id: number; name: string; quantity: number; status: string }[] = [];
 
         for (const item of items) {
           console.log(`Adding ${item.quantity} of ${item.name} to the cart`);
@@ -135,18 +142,20 @@ const AudioChat: React.FC = () => {
           
           if (!menu) {
             console.error(`Menu item ${item.name} not found.`);
+            addedItems.push({...item, id: -1, status: "menu not found"})
             continue; // Skip this item
           }
 
           try {
             cart.addToCart({...menu, quantity: item.quantity});
-            addedItems.push({...menu, quantity: item.quantity});
+            addedItems.push({...menu, quantity: item.quantity, status: "success"});
           } catch (error) {
             console.error(`Failed to add ${item.name} to the cart:`, error);
+            addedItems.push({...menu, quantity: item.quantity, status: "unknown error"})
           }
         }
 
-        return { status: 'success', addedItems };
+        return { addedItems };
       }
     );
 
@@ -180,24 +189,30 @@ const AudioChat: React.FC = () => {
         },
       },
       async ({ items }: { items: { id: number; quantity: number }[] }) => {
-        const changedItems = [];
+        const changedItems: {id: number; name: string; quantity: number, status: string}[] = [];
 
         for (const item of items) {
-
           console.log(`Adding ${item.quantity} of ${cart.item[item.id]} to the cart`);
-          
+
           try {
             cart.changeItemQuantity(item.id, item.quantity);
-            changedItems.push({...cart.item[item.id], quantity: item.quantity});
+            changedItems.push({...cart.item[item.id], quantity: item.quantity, status: "success"});
           } catch (error) {
             console.error(`Failed to add ${cart.item[item.id]} to the cart:`, error);
+            changedItems.push({...cart.item[item.id], quantity: item.quantity, status: "unknown error"});
           }
         }
 
-        return { status: 'success', addedItems: changedItems };
+        return { changedItems };
       }
     );
+    
+  }, [cart, catalog]);
 
+  useEffect(() => {
+    const client = clientRef.current;
+    const wavStreamPlayer = wavStreamPlayerRef.current;
+    
     // handle realtime events from client + server for event logging
     client.on('realtime.event', (realtimeEvent: RealtimeEvent) => {
     });
@@ -210,6 +225,8 @@ const AudioChat: React.FC = () => {
       }
     });
     client.on('conversation.updated', async ({ item, delta }: any) => {
+      //const items = client.conversation.getItems();
+      
       if (delta?.audio) {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
       }
