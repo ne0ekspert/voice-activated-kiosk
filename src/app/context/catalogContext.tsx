@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type CatalogItem = {
+  imageUri: string;
   id: number;
   name: string;
   price: number;
