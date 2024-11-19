@@ -13,7 +13,7 @@ interface MenuItem {
   price: number;
 };
 
-function CartItemComponent({ item }: { item: CartItem }) {
+export function CartItemComponent({ item }: { item: CartItem }) {
   const catalog = useCatalog();
   const cart = useCart();
 
@@ -29,7 +29,7 @@ function CartItemComponent({ item }: { item: CartItem }) {
   };
 
   return (
-    <li key={item.id}>
+    <li key={item.id} className='border-b border-gray-400 pb-2 pt-2'>
       {item.quantity}x {item.name} - ${item.price * item.quantity}
       <ul>
         {item.options.map((option) => (
@@ -38,8 +38,19 @@ function CartItemComponent({ item }: { item: CartItem }) {
       </ul>
       <select className='bg-black' defaultValue='' onChange={(e) => addOption(e, item.id)}>
         <option value='' disabled>Select Add-on</option>
-        {catalog.find((menu) => menu.id === item.catalogid)?.options.map((options) => (
-          <option key={options.id} value={options.id}>{options.name} - ${options.price}</option>
+        {[...new Map(
+          catalog
+            .find((menu) => menu.id === item.catalogid)?.options
+            ?.map((option) => [option.category, option]) // Deduplicate by category
+        ).values()]
+        .map((optionGroup) => (
+          <optgroup key={optionGroup.category} label={optionGroup.category}>
+            {catalog.find((menu) => menu.id === item.catalogid)?.options
+              .filter((option) => option.category === optionGroup.category)
+              .map((options) => (
+                <option key={options.id} value={options.id}>{options.name} - ${options.price}</option>
+              ))}
+          </optgroup>
         ))}
       </select>
       <p>Subtotal: ${item.subtotal ?? 0}</p>
