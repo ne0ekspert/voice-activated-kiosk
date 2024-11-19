@@ -4,9 +4,21 @@ import { RealtimeClient } from '@openai/realtime-api-beta';
 import { WavRecorder, WavStreamPlayer } from '../lib/wavtools';
 import { useCart } from '../context/cartContext';
 import { useCatalog } from '../context/catalogContext';
+import { v4 as uuidv4 } from 'uuid';
+
+import type { CartItemOption } from '../context/cartContext';
 
 type RealtimeEvent = {
   content: string;
+};
+
+type UpdatedItems = {
+  id?: string;
+  catalogid?: number;
+  price?: number;
+  quantity?: number;
+  options?: CartItemOption[];
+  status: string;
 };
 
 const AudioChat: React.FC = () => {
@@ -134,7 +146,7 @@ const AudioChat: React.FC = () => {
       async ({ items }: { items: { name: string; quantity: number }[] }) => {
         console.log(catalog);
 
-        const addedItems: { id: number; name: string; quantity: number; status: string }[] = [];
+        const addedItems: UpdatedItems[] = [];
 
         for (const item of items) {
           console.log(`Adding ${item.quantity} of ${item.name} to the cart`);
@@ -142,16 +154,17 @@ const AudioChat: React.FC = () => {
           
           if (!menu) {
             console.error(`Menu item ${item.name} not found.`);
-            addedItems.push({...item, id: -1, status: "menu not found"})
+            addedItems.push({...item, status: "menu not found"});
             continue; // Skip this item
           }
 
           try {
-            cart.addToCart({...menu, quantity: item.quantity});
-            addedItems.push({...menu, quantity: item.quantity, status: "success"});
+            const cartItemId = uuidv4();
+            cart.addItemToCart({...menu, id: cartItemId, catalogid: menu.id, quantity: item.quantity, options: []});
+            addedItems.push({...menu, id: cartItemId, catalogid: menu.id, quantity: item.quantity, options: [], status: "success"});
           } catch (error) {
             console.error(`Failed to add ${item.name} to the cart:`, error);
-            addedItems.push({...menu, quantity: item.quantity, status: "unknown error"})
+            addedItems.push({...menu, id: '', quantity: item.quantity, options: [], status: "unknown error"})
           }
         }
 
@@ -173,7 +186,7 @@ const AudioChat: React.FC = () => {
                 type: 'object',
                 properties: {
                   id: {
-                    type: 'number',
+                    type: 'string',
                     description: "Item ID in the cart"
                   },
                   quantity: {
@@ -188,18 +201,24 @@ const AudioChat: React.FC = () => {
           required: ['items'],
         },
       },
-      async ({ items }: { items: { id: number; quantity: number }[] }) => {
-        const changedItems: {id: number; name: string; quantity: number, status: string}[] = [];
+      async ({ items }: { items: { id: string; quantity: number }[] }) => {
+        const changedItems: UpdatedItems[] = [];
 
-        for (const item of items) {
-          console.log(`Adding ${item.quantity} of ${cart.item[item.id]} to the cart`);
+        for (const {id, quantity} of items) {
+          const item = cart.item.find((cartItem) => cartItem.id === id);
+
+          if (!item) {
+            changedItems.push({'status': 'item not found'});
+            continue;
+          }
+          console.log(`Adding ${quantity} of ${cart.item[item.catalogid]} to the cart`);
 
           try {
-            cart.changeItemQuantity(item.id, item.quantity);
-            changedItems.push({...cart.item[item.id], quantity: item.quantity, status: "success"});
+            cart.changeItemQuantity(item, quantity);
+            changedItems.push({...item, quantity: quantity, status: "success"});
           } catch (error) {
-            console.error(`Failed to add ${cart.item[item.id]} to the cart:`, error);
-            changedItems.push({...cart.item[item.id], quantity: item.quantity, status: "unknown error"});
+            console.error(`Failed to add ${cart.item[item.catalogid]} to the cart:`, error);
+            changedItems.push({...item, quantity: quantity, status: "unknown error"});
           }
         }
 

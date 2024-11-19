@@ -30,7 +30,7 @@ export default function Checkout() {
             {cart.item.map((item) => (
               <li key={item.id}>
                 {item.name} x {item.quantity} - ${item.price * item.quantity}
-                <button onClick={() => cart.removeFromCart(item.id)}>Remove</button>
+                <button onClick={() => cart.removeItemFromCart(item)}>Remove</button>
               </li>
             ))}
           </ul>

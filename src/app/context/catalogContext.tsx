@@ -1,12 +1,6 @@
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-
-type CatalogItem = {
-  imageUri: string;
-  id: number;
-  name: string;
-  price: number;
-};
+import { CatalogItem } from '../api/items/route';
 
 const CatalogContext = createContext<CatalogItem[] | undefined>(undefined);
 
