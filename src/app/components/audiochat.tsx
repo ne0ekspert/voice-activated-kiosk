@@ -12,12 +12,15 @@ type RealtimeEvent = {
   content: string;
 };
 
+type UpdatedItemOption = CartItemOption & { status?: string };
+
 type UpdatedItems = {
   id?: string;
+  name?: string;
   catalogid?: number;
   price?: number;
   quantity?: number;
-  options?: CartItemOption[];
+  options?: UpdatedItemOption[];
   status: string;
 };
 
@@ -78,7 +81,7 @@ const AudioChat: React.FC = () => {
     const client = clientRef.current;
 
     client.updateSession({
-      instructions: '당신은 주문을 받는 점원입니다.',
+      instructions: '당신은 주문을 받는 점원입니다. 사용자가 메뉴 설명을 원할 때는 옵션을 제외하고 설명하고, 사용자가 옵션 설명을 원할 때 옵션 설명을 하세요.',
       turn_detection: { type: 'server_vad' },
     });
 
@@ -100,9 +103,47 @@ const AudioChat: React.FC = () => {
         },
       },
       async () => {
-        return catalog;
+        console.log("Function Calling: view_menu");
+        console.log(catalog);
+        let result = "";
+
+        catalog.forEach((menu) => {
+          result += `${menu.name}, $${menu.price}\n`;
+        });
+
+        return result;
       }
     );
+
+    // 옵션 확인 툴
+    client.addTool(
+      {
+        name: 'view_options',
+        description: 'View available menu options and price.',
+        parameters: {
+          type: 'object',
+          properties: {
+            name: {type: 'string'},
+          },
+          required: ['name'],
+        }
+      },
+      async ({ name }: { name: string }) => {
+        console.log("Function Calling: view_options");
+        
+        const options = catalog.find((menu) => menu.name === name)?.options;
+        
+        if (!options) return "Menu not found";
+
+        let result = "";
+
+        options.forEach((option) => {
+          result += `${option.name}, $${option.price}\n`;
+        });
+
+        return result;
+      }
+    )
     
     // 장바구니 확인 툴
     client.addTool(
@@ -116,7 +157,15 @@ const AudioChat: React.FC = () => {
         },
       },
       async () => {
-        return cart.item;
+        console.log("Function Calling: view_cart");
+
+        let result = "";
+
+        cart.item.forEach((item) => {
+          result += `${item.quantity}x ${item.name} = $${item.subtotal ?? 0}\n`;
+        });
+
+        return result;
       }
     );
 
@@ -135,6 +184,17 @@ const AudioChat: React.FC = () => {
                 properties: {
                   name: {type: 'string'},
                   quantity: {type: 'number'},
+                  options: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: {type: 'string'},
+                        quantity: {type: 'number'},
+                      },
+                      required: ['name', 'quantity'],
+                    },
+                  },
                 },
                 required: ['name', 'quantity'],
               },
@@ -143,32 +203,131 @@ const AudioChat: React.FC = () => {
           required: ['items'],
         },
       },
-      async ({ items }: { items: { name: string; quantity: number }[] }) => {
+      async ({ items }: { items: { name: string; quantity: number; options?: CartItemOption[] }[] }) => {
+        console.log("Function Calling: add_item");
         console.log(catalog);
 
         const addedItems: UpdatedItems[] = [];
 
-        for (const item of items) {
+        items.forEach((item) => {
           console.log(`Adding ${item.quantity} of ${item.name} to the cart`);
           const menu = catalog.find(menu => menu.name === item.name);
           
           if (!menu) {
             console.error(`Menu item ${item.name} not found.`);
             addedItems.push({...item, status: "menu not found"});
-            continue; // Skip this item
+            return; // Skip this item
           }
+
+          const options: UpdatedItemOption[] = [];
+          item.options?.forEach((cartOption) => {
+            const option: UpdatedItemOption = cartOption;
+
+            if (!menu.options.map((catalogOption) => catalogOption.name).includes(option.name)) {
+              option.status = `option not found on menu ${menu.name}`;
+            } else {
+              option.status = 'success';
+            }
+
+            options.push(option);
+          });
+          console.log(options);
 
           try {
             const cartItemId = uuidv4();
-            cart.addItemToCart({...menu, id: cartItemId, catalogid: menu.id, quantity: item.quantity, options: []});
-            addedItems.push({...menu, id: cartItemId, catalogid: menu.id, quantity: item.quantity, options: [], status: "success"});
+            cart.addItemToCart({...menu, id: cartItemId, name: item.name, catalogid: menu.id, quantity: item.quantity, options: options});
+            addedItems.push({...menu, id: cartItemId, catalogid: menu.id, quantity: item.quantity, options, status: "success"});
           } catch (error) {
             console.error(`Failed to add ${item.name} to the cart:`, error);
-            addedItems.push({...menu, id: '', quantity: item.quantity, options: [], status: "unknown error"})
+            addedItems.push({...menu, id: '', name: item.name, quantity: item.quantity, options, status: "unknown error"})
           }
+        });
+
+        let result = "";
+
+        addedItems.forEach((item) => {
+          result += `${item.quantity}x ${item.name}: ${item.status}`;
+          item.options?.forEach((option) => {
+            result += `+ ${option.quantity}x ${option.name}: ${option.status}`
+          });
+        });
+
+        console.log("Result:");
+        console.log(result);
+
+        return result;
+      }
+    );
+
+    // 옵션 추가 툴
+    client.addTool(
+      {
+        name: 'add_option',
+        description: "Add options to an existing item in the user's cart",
+        parameters: {
+          type: 'object',
+          properties: {
+            itemId: { type: 'string' },
+            options: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  quantity: { type: 'number' },
+                },
+                required: ['name', 'quantity'],
+              },
+            },
+          },
+          required: ['itemId', 'options'],
+        },
+      },
+      async ({
+        itemId,
+        options,
+      }: {
+        itemId: string;
+        options: { name: string; quantity: number }[];
+      }) => {
+        console.log("Function Calling: add_option")
+        const cartItem = cart.item.find((item) => item.id === itemId);
+
+        if (!cartItem) {
+          console.error(`Cart item with ID ${itemId} not found.`);
+          return { status: "item not found" };
         }
 
-        return { addedItems };
+        const validOptions: CartItemOption[] = [];
+        for (const option of options) {
+          const catalogOption = catalog.find((menu) =>
+            menu.options?.find((opt) => opt.name === option.name)
+          )?.options?.find((opt) => opt.name === option.name);
+
+          if (!catalogOption) {
+            console.error(`Option ${option.name} not found in catalog.`);
+            continue; // Skip invalid options
+          }
+
+          validOptions.push({ ...catalogOption, quantity: option.quantity });
+        }
+
+        if (validOptions.length === 0) {
+          console.error("No valid options to add.");
+          return { status: "no valid options" };
+        }
+
+        try {
+          for (const validOption of validOptions) {
+            cart.addOptionToItem(cartItem, validOption);
+          }
+
+          console.log(`Options added to item ${itemId}:`, validOptions);
+          return { status: "success", updatedItem: cartItem };
+        } catch (error) {
+          console.error(`Failed to add options to item ${itemId}:`, error);
+          return { status: "error", error: error.message };
+        }
       }
     );
 
@@ -240,7 +399,7 @@ const AudioChat: React.FC = () => {
       const trackSampleOffset = await wavStreamPlayer.interrupt();
       if (trackSampleOffset?.trackId) {
         const { trackId, offset } = trackSampleOffset;
-        await client.cancelResponse(trackId, offset);
+        client.cancelResponse(trackId, offset);
       }
     });
     client.on('conversation.updated', async ({ item, delta }: any) => {

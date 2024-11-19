@@ -150,7 +150,7 @@ export class WavStreamPlayer {
   /**
    * Strips the current stream and returns the sample offset of the audio
    * @param {boolean} [interrupt]
-   * @returns {{trackId: string|null, offset: number, currentTime: number}}
+   * @returns {Promise<{trackId: string|null, offset: number, currentTime: number}>}
    */
   async interrupt() {
     return this.getTrackSampleOffset(true);

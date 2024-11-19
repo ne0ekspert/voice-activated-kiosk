@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '../context/cartContext';
+import { CartItemComponent } from '../order/page';
 
 export default function Checkout() {
   const [orderStatus, setOrderStatus] = useState('');
@@ -21,17 +22,14 @@ export default function Checkout() {
 
   return (
     <div>
-      <h2>Checkout</h2>
+      <h1 className='text-3xl'>Checkout</h1>
       {cart.item.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
         <div>
           <ul>
             {cart.item.map((item) => (
-              <li key={item.id}>
-                {item.name} x {item.quantity} - ${item.price * item.quantity}
-                <button onClick={() => cart.removeItemFromCart(item)}>Remove</button>
-              </li>
+              <CartItemComponent item={item} key={item.id} />
             ))}
           </ul>
           <p>Total: ${cart.total}</p>
