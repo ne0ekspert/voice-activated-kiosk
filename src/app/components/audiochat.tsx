@@ -81,8 +81,15 @@ const AudioChat: React.FC = () => {
     const client = clientRef.current;
 
     client.updateSession({
-      instructions: '당신은 주문을 받는 점원입니다. 사용자가 메뉴 설명을 원할 때는 옵션을 제외하고 설명하고, 사용자가 옵션 설명을 원할 때 옵션 설명을 하세요.',
-      turn_detection: { type: 'server_vad' },
+      instructions:
+        '당신은 주문을 받는 점원입니다. ' +
+        '사용자가 메뉴 설명을 원할 때는 옵션을 제외하고 설명하고, 사용자가 옵션 설명을 원할 때 옵션 설명을 하세요. ' +
+        '최신 상태를 위해 대답하기 전 툴을 사용하여 정보를 얻으세요. '
+      ,
+      turn_detection: {
+        type: 'server_vad',
+        threshold: 0.7,
+      },
     });
 
     const existingTools = Object.keys(client.tools) || [];
@@ -104,12 +111,13 @@ const AudioChat: React.FC = () => {
       },
       async () => {
         console.log("Function Calling: view_menu");
-        console.log(catalog);
         let result = "";
 
         catalog.forEach((menu) => {
           result += `${menu.name}, $${menu.price}\n`;
         });
+
+        console.log(result);
 
         return result;
       }
@@ -141,6 +149,8 @@ const AudioChat: React.FC = () => {
           result += `${option.name}, $${option.price}\n`;
         });
 
+        console.log("Result:", result);
+
         return result;
       }
     )
@@ -164,6 +174,8 @@ const AudioChat: React.FC = () => {
         cart.item.forEach((item) => {
           result += `${item.quantity}x ${item.name} = $${item.subtotal ?? 0}\n`;
         });
+
+        console.log("Result:", result);
 
         return result;
       }
@@ -246,14 +258,13 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         addedItems.forEach((item) => {
-          result += `${item.quantity}x ${item.name}: ${item.status}`;
+          result += `${item.quantity}x ${item.name}: ${item.status}\n`;
           item.options?.forEach((option) => {
-            result += `+ ${option.quantity}x ${option.name}: ${option.status}`
+            result += `+ ${option.quantity}x ${option.name}: ${option.status}\n`
           });
         });
 
-        console.log("Result:");
-        console.log(result);
+        console.log("Result:", result);
 
         return result;
       }
@@ -295,39 +306,35 @@ const AudioChat: React.FC = () => {
 
         if (!cartItem) {
           console.error(`Cart item with ID ${itemId} not found.`);
-          return { status: "item not found" };
+          return `Cart item with ID ${itemId} not found.`;
         }
 
-        const validOptions: CartItemOption[] = [];
+        const updatedOptions: UpdatedItemOption[] = [];
         for (const option of options) {
           const catalogOption = catalog.find((menu) =>
-            menu.options?.find((opt) => opt.name === option.name)
+            menu.id === cartItem.catalogid
           )?.options?.find((opt) => opt.name === option.name);
 
           if (!catalogOption) {
             console.error(`Option ${option.name} not found in catalog.`);
+            updatedOptions.push({id: -1, name: option.name, price: 0, quantity:0, category: '', status: `option ${option.name} not found`})
             continue; // Skip invalid options
           }
 
-          validOptions.push({ ...catalogOption, quantity: option.quantity });
+          console.log(`Add option ${option.name} to ${cartItem.name}`);
+
+          updatedOptions.push({ ...catalogOption, quantity: option.quantity, status: 'success' });
+
+          cart.addOptionToItem(cartItem, {...catalogOption, quantity: 1});
         }
 
-        if (validOptions.length === 0) {
-          console.error("No valid options to add.");
-          return { status: "no valid options" };
+        let result = '';
+
+        for (const option of updatedOptions) {
+          result += `${option.quantity}x ${option.name}: ${option.status}\n`
         }
 
-        try {
-          for (const validOption of validOptions) {
-            cart.addOptionToItem(cartItem, validOption);
-          }
-
-          console.log(`Options added to item ${itemId}:`, validOptions);
-          return { status: "success", updatedItem: cartItem };
-        } catch (error) {
-          console.error(`Failed to add options to item ${itemId}:`, error);
-          return { status: "error", error: error.message };
-        }
+        return result;
       }
     );
 
@@ -367,10 +374,11 @@ const AudioChat: React.FC = () => {
           const item = cart.item.find((cartItem) => cartItem.id === id);
 
           if (!item) {
-            changedItems.push({'status': 'item not found'});
+            changedItems.push({id: id, 'status': 'item not found'});
             continue;
           }
-          console.log(`Adding ${quantity} of ${cart.item[item.catalogid]} to the cart`);
+
+          console.log(`Changing ${item.name} quantity to ${quantity}`);
 
           try {
             cart.changeItemQuantity(item, quantity);
@@ -381,7 +389,12 @@ const AudioChat: React.FC = () => {
           }
         }
 
-        return { changedItems };
+        let result = '';
+        for (const item of changedItems) {
+          result += `Change ${item.id} ${item.name} quantity to ${item.quantity}: ${item.status}\n`;
+        }
+
+        return result;
       }
     );
     
