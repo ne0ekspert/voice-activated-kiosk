@@ -7,6 +7,7 @@ import { useCatalog } from '../context/catalogContext';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { CartItemOption } from '../context/cartContext';
+import { useLanguage } from '../context/languageContext';
 
 type RealtimeEvent = {
   content: string;
@@ -46,6 +47,7 @@ const AudioChat: React.FC = () => {
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
   const catalog = useCatalog();
   const cart = useCart();
+  const { setLanguage } = useLanguage();
 
   const connectConversation = useCallback(async () => {
     const client = clientRef.current;
@@ -398,7 +400,28 @@ const AudioChat: React.FC = () => {
       }
     );
     
-  }, [cart, catalog]);
+    //언어 변경 툴
+    client.addTool(
+      {
+        name: 'change_language',
+        description: 'Change UI Language',
+        parameters: {
+          type: 'object',
+          properties: {
+            lang: {
+              type: 'string',
+              enum: ['en', 'ko'],
+              description: 'Language code'
+            }
+          },
+          required: ['language']
+        }
+      },
+      async ({ lang }: { lang: string }) =>  {
+        setLanguage(lang);
+      }
+    )
+  }, [cart, catalog, setLanguage]);
 
   useEffect(() => {
     const client = clientRef.current;
