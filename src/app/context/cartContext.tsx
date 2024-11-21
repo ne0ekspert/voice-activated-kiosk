@@ -1,7 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { CatalogItemOption } from '../api/items/route'
+import { useLanguage } from './languageContext';
+import { useCatalog } from './catalogContext';
 
 export type CartItemOption = CatalogItemOption & {
   quantity: number
@@ -9,8 +11,8 @@ export type CartItemOption = CatalogItemOption & {
 
 export type CartItem = {
   id: string;
-  catalogid: number;
   name: string;
+  catalogid: number;
   price: number;
   quantity: number;
   options: CartItemOption[]
@@ -23,6 +25,7 @@ type CartContextType = {
   addOptionToItem: (item: CartItem, option: CartItemOption) => void;
   changeItemQuantity: (item: CartItem, quantity: number) => void;
   removeItemFromCart: (item: CartItem) => void;
+  removeOptionFromItem: (item: CartItem, option: CartItemOption) => void;
   clearCart: () => void;
   total: number;
 };
@@ -31,6 +34,35 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const catalog = useCatalog();
+  const language = useLanguage();
+
+  useEffect(() => {
+    setCart((prevCart) =>
+      prevCart.map((cartItem) => {
+        // Find the corresponding catalog item in the current language
+        const catalogItem = catalog.find((item) => item.id === cartItem.catalogid);
+
+        if (!catalogItem) return cartItem; // If the item is not found, keep it as is
+
+        return {
+          ...cartItem,
+          name: catalogItem.name, // Update item name based on the catalog
+          options: cartItem.options.map((cartOption) => {
+            // Find the corresponding catalog option
+            const catalogOption = catalogItem.options.find((opt) => opt.id === cartOption.id);
+            return catalogOption
+              ? {
+                  ...cartOption,
+                  name: catalogOption.name, // Update option name
+                  category: catalogOption.category,
+                }
+              : cartOption; // If the option is not found, keep it as is
+          }),
+        };
+      })
+    );
+  }, [catalog, language.language]);
 
   const addItemToCart = (item: CartItem) => {
     item.subtotal = item.price * item.quantity;
@@ -80,12 +112,25 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setCart((prevCart) => prevCart.filter((cartItem) => cartItem !== item));
   };
 
+  const removeOptionFromItem = (item: CartItem, option: CartItemOption) => {
+    setCart((prevCart) => {
+      const updatedOptions = prevCart.map(cartItem => 
+        cartItem.id === item.id ? 
+            { ...cartItem, options: cartItem.options.filter(prevOption => prevOption.id !== option.id) }
+          : 
+            cartItem
+      );
+
+      return updatedOptions;
+    });
+  };
+
   const clearCart = () => setCart([]);
 
   const total = cart.reduce((acc, item) => acc + (item.subtotal ?? 0), 0);
 
   return (
-    <CartContext.Provider value={{ item: cart, addItemToCart, addOptionToItem, changeItemQuantity, removeItemFromCart, clearCart, total }}>
+    <CartContext.Provider value={{ item: cart, addItemToCart, addOptionToItem, changeItemQuantity, removeItemFromCart, removeOptionFromItem, clearCart, total }}>
       {children}
     </CartContext.Provider>
   );

@@ -5,6 +5,7 @@ import "./globals.css";
 import { CatalogProvider } from "./context/catalogContext";
 import { CartProvider } from "./context/cartContext";
 import AudioChat from './components/audiochat';
+import { LanguageProvider } from "./context/languageContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,12 +33,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <CatalogProvider>
-          <CartProvider>
-            <AudioChat />
-            {children}
-          </CartProvider>
-        </CatalogProvider>
+        <LanguageProvider>
+          <CatalogProvider>
+            <CartProvider>
+              <AudioChat />
+              {children}
+            </CartProvider>
+          </CatalogProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
