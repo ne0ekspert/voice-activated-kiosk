@@ -1,0 +1,77 @@
+.hero {
+  position: relative;
+  text-align: center;
+  color: white;
+  width: 100vw;
+  height: 100vh;
+}
+
+.hero img {
+  width: 100%;
+  height: auto;
+  filter: brightness(70%);
+}
+
+.hero-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(108, 88, 76, 0.7); /* 어울리는 갈색 반투명 배경 */
+  padding: 20px 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* 약간의 그림자 추가 */
+}
+
+.hero-text h1 {
+  font-size: 3rem;
+  margin: 0;
+  color: #eae3d2; /* 부드러운 크림색 */
+}
+
+/* 애니메이션 스타일 */
+.animated-text {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid #eae3d2; /* 커서 효과 */
+  animation: typing 3s steps(30, end), blink 0.5s step-end infinite alternate;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink {
+  from {
+    border-color: transparent;
+  }
+  to {
+    border-color: #eae3d2;
+  }
+}
+
+.hero-text p {
+  font-size: 1.2rem;
+  margin: 10px 0;
+  color: #f0ece2; /* 텍스트 대비 색상 */
+}
+
+.hero-text button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: #6C584C;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.hero-text button:hover {
+  background-color: #A98467;
+}
