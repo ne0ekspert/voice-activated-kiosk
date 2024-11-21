@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { ChangeEvent, MouseEvent } from 'react';
 import type { CartItem } from '../context/cartContext';
 import { PageTitle } from '../components/title';
+import { useLanguage } from '../context/languageContext';
 
 interface MenuItem {
   id: number;
@@ -17,6 +18,7 @@ interface MenuItem {
 export function CartItemComponent({ item }: { item: CartItem }) {
   const catalog = useCatalog();
   const cart = useCart();
+  const { t } = useLanguage();
 
   const addOption = (e: ChangeEvent<HTMLSelectElement>) => {
     e.preventDefault();
@@ -50,7 +52,7 @@ export function CartItemComponent({ item }: { item: CartItem }) {
         ))}
       </ul>
       <select className='bg-transparent' defaultValue='' onChange={(e) => addOption(e)}>
-        <option value='' disabled>Select Add-on</option>
+        <option value='' disabled>{t('item.select_addon')}</option>
         {[...new Map(
           catalog
             .find((menu) => menu.id === item.catalogid)?.options
@@ -66,8 +68,8 @@ export function CartItemComponent({ item }: { item: CartItem }) {
           </optgroup>
         ))}
       </select>
-      <p>Subtotal: ${item.subtotal ?? 0}</p>
-      <button onClick={() => cart.removeItemFromCart(item)}>Remove</button>
+      <p>{t('item.subtotal')}: ${item.subtotal ?? 0}</p>
+      <button onClick={() => cart.removeItemFromCart(item)}>{t('cart.remove')}</button>
     </li>
   );
 }
@@ -75,16 +77,18 @@ export function CartItemComponent({ item }: { item: CartItem }) {
 export default function Menu() {
   const catalog = useCatalog();
   const cart = useCart();
+  const { t } = useLanguage();
 
   const handleAddToCart = (item: MenuItem) => {
     cart.addItemToCart({ ...item, catalogid: item.id, id: uuidv4(), quantity: 1, options: [] });
   };
 
   return (
-    <div className='flex flex-col h-svh w-full'>
-      <PageTitle>Menu</PageTitle>
-      <div className='flex h-screen grow'>
-        <div className='h-screen w-0 grow p-2 border-r border-gray-500 overflow-y-auto'>
+    <div className='flex flex-col h-screen w-full'>
+      <PageTitle>{t('menu.title')}</PageTitle>
+
+      <div className='flex grow'>
+        <div className='flex-none w-1/2 p-2 border-r border-gray-500 overflow-y-auto max-h-85vh'>
           <ul>
             {catalog.map((item) => (
               <li key={item.id} className='flex items-center text-xl border-b border-gray-500' onClick={() => handleAddToCart(item)}>
@@ -94,17 +98,20 @@ export default function Menu() {
             ))}
           </ul>
         </div>
-        <div className='flex flex-col h-screen w-0 grow p-2 overflow-y-auto'>
-          <ul className='grow'>
+
+        <div className='flex flex-col w-1/2 p-2 max-h-85vh'>
+          <ul className='flex-grow overflow-y-auto'>
             {cart.item.map(item => (
               <CartItemComponent item={item} key={item.id} />
             ))}
           </ul>
-          <p>Total: ${cart.total}</p>
-          <button onClick={cart.clearCart}>Clear Cart</button>
+          <div>
+            <p>{t('cart.total')}: ${cart.total}</p>
+            <button onClick={cart.clearCart}>{t('cart.clear')}</button>
+            <Link href='/checkout' className='w-full'>{t('menu.to_checkout')}</Link>
+          </div>
         </div>
       </div>
-      <Link href='/checkout' className='w-full'>Continue to Checkout</Link>
     </div>
   );
 }

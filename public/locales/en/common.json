@@ -1,0 +1,28 @@
+{
+    "menu": {
+        "title": "Menu",
+        "to_checkout": "To Checkout"
+    },
+    "item": {
+        "select_addon": "Select Add-on",
+        "subtotal": "Subtotal"
+    },
+    "cart": {
+        "total": "Total",
+        "clear": "Clear Cart",
+        "remove": "Remove from cart",
+        "remove_option": "Remove"
+    },
+    "checkout": {
+        "takeout": {
+            "title": "Takeout",
+            "inside": "Eat here",
+            "outside": "Takeout"
+        },
+        "payment": {
+            "title": "Payment",
+            "card": "Card",
+            "cash": "Cash"
+        }
+    }
+}

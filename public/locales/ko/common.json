@@ -1,0 +1,28 @@
+{
+    "menu": {
+        "title": "메뉴",
+        "to_checkout": "결제하기"
+    },
+    "item": {
+        "select_addon": "옵션 추가",
+        "subtotal": "가격"
+    },
+    "cart": {
+        "total": "합계",
+        "clear": "장바구니 비우기",
+        "remove": "장바구니에서 삭제",
+        "remove_option": "삭제"
+    },
+    "checkout": {
+        "takeout": {
+            "title": "포장 여부",
+            "inside": "매장 식사",
+            "outside": "포장"
+        },
+        "payment": {
+            "title": "결제",
+            "card": "카드",
+            "cash": "현금"
+        }
+    }
+}

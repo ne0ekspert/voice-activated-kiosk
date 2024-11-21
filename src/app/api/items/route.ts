@@ -16,7 +16,7 @@ export type CatalogItem = {
   options: CatalogItemOption[];
 };
 
-export async function GET(req: Request) {
+export async function GET(req: Readonly<Request>) {
   const language = req.headers.get('accept-language')?.split(',')[0] || 'en';
 
   // 메뉴 데이터 가져오기
