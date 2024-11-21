@@ -4,8 +4,9 @@ import Image from 'next/image';
 import { useCatalog } from '../context/catalogContext';
 import { useCart } from '../context/cartContext';
 import { v4 as uuidv4 } from 'uuid';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, MouseEvent } from 'react';
 import type { CartItem } from '../context/cartContext';
+import { PageTitle } from '../components/title';
 
 interface MenuItem {
   id: number;
@@ -17,15 +18,27 @@ export function CartItemComponent({ item }: { item: CartItem }) {
   const catalog = useCatalog();
   const cart = useCart();
 
-  const addOption = (e: ChangeEvent<HTMLSelectElement>, itemId: string) => {
+  const addOption = (e: ChangeEvent<HTMLSelectElement>) => {
     e.preventDefault();
     
-    const optionId = e.target.selectedIndex - 1;
-    const item = cart.item.find((cartItem) => cartItem.id === itemId)!;
-    const catalogOption = catalog.find((catalogItem) => catalogItem.id === item.catalogid)!.options[optionId];
+    const optionId = parseInt(e.target.value);
+    const catalogItem = catalog.find((catalogItem) => catalogItem.id === item.catalogid)!;
+    const catalogOption = catalogItem.options.find((option) => option.id === optionId)!;
+    
+    console.log(catalogOption);
+    
     const option = {...catalogOption, quantity: 1};
     cart.addOptionToItem(item, option);
+    
     console.log(cart.item);
+  };
+
+  const removeOption = (e: MouseEvent<HTMLButtonElement>, optionId: number) => {
+    e.preventDefault();
+
+    const option = item.options.find((option) => option.id === optionId)!;
+
+    cart.removeOptionFromItem(item, option);
   };
 
   return (
@@ -33,10 +46,10 @@ export function CartItemComponent({ item }: { item: CartItem }) {
       {item.quantity}x {item.name} - ${item.price * item.quantity}
       <ul>
         {item.options.map((option) => (
-          <li key={option.id}>+ {option.name} - ${option.price}</li>
+          <li key={option.id}>+ {option.name} - ${option.price} <button onClick={(e) => removeOption(e, option.id)}>Remove</button></li>
         ))}
       </ul>
-      <select className='bg-black' defaultValue='' onChange={(e) => addOption(e, item.id)}>
+      <select className='bg-transparent' defaultValue='' onChange={(e) => addOption(e)}>
         <option value='' disabled>Select Add-on</option>
         {[...new Map(
           catalog
@@ -68,10 +81,10 @@ export default function Menu() {
   };
 
   return (
-    <div className='flex flex-col h-svh w-full p-3'>
-      <h1 className='text-3xl'>Menu</h1>
-      <div className='flex h-max grow'>
-        <div className='h-full w-0 grow p-2 border-r border-gray-500'>
+    <div className='flex flex-col h-svh w-full'>
+      <PageTitle>Menu</PageTitle>
+      <div className='flex h-screen grow'>
+        <div className='h-screen w-0 grow p-2 border-r border-gray-500 overflow-y-auto'>
           <ul>
             {catalog.map((item) => (
               <li key={item.id} className='flex items-center text-xl border-b border-gray-500' onClick={() => handleAddToCart(item)}>
@@ -81,7 +94,7 @@ export default function Menu() {
             ))}
           </ul>
         </div>
-        <div className='flex flex-col h-full w-0 grow p-2'>
+        <div className='flex flex-col h-screen w-0 grow p-2 overflow-y-auto'>
           <ul className='grow'>
             {cart.item.map(item => (
               <CartItemComponent item={item} key={item.id} />
