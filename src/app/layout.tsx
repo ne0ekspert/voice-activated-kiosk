@@ -4,7 +4,6 @@ import "./globals.css";
 
 import { CatalogProvider } from "./context/catalogContext";
 import { CartProvider } from "./context/cartContext";
-import AudioChat from './components/audiochat';
 import { LanguageProvider } from "./context/languageContext";
 
 const geistSans = localFont({
@@ -36,7 +35,6 @@ export default function RootLayout({
         <LanguageProvider>
           <CatalogProvider>
             <CartProvider>
-              <AudioChat />
               {children}
             </CartProvider>
           </CatalogProvider>
