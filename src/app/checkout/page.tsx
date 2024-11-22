@@ -1,9 +1,5 @@
 'use client';
 import Link from 'next/link';
-import { useCart } from '../context/cartContext';
-import { CartItemComponent } from '../order/page';
-import { PageTitle } from '../components/title';
-
 import {
   BsCreditCard,
   BsCashCoin,
@@ -13,6 +9,11 @@ import {
   BsCaretRightFill
 } from "react-icons/bs";
 import { useLanguage } from '../context/languageContext';
+import { useCart } from '../context/cartContext';
+import { CartItemComponent } from '../order/page';
+import { PageTitle } from '../components/title';
+
+import type { FormEvent } from 'react';
 
 export default function Checkout() {
   const cart = useCart();
@@ -30,27 +31,33 @@ export default function Checkout() {
     console.log(data);
   }
 
+  function checkoutSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+  }
+
   return (
     <div>
       <PageTitle>Checkout</PageTitle>
       <div className='flex'>
-        <div className='w-1/2 overflow-y-auto max-h-85vh'>
-          {cart.item.length === 0 ? (
-            <p>Your cart is empty.</p>
-          ) : (
-            <ul>
-              {cart.item.map((item) => (
-                <CartItemComponent item={item} key={item.id} />
-              ))}
-            </ul>
-          )}
-          <p>{t('cart.total')}: ${cart.total}</p>
-          <button onClick={cart.clearCart}>{t('cart.clear')}</button>
-          <button>Proceed to Payment</button>
+        <div className='flex flex-col w-1/2 grow overflow-y-auto max-h-85vh'>
+          <div className='grow'>
+            {cart.item.length === 0 ? (
+              <p>Your cart is empty.</p>
+            ) : (
+              <ul className='h-full'>
+                {cart.item.map((item) => (
+                  <CartItemComponent item={item} key={item.id} />
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <p className='text-3xl font-bold m-5'>{t('cart.total')}: ${cart.total}</p>
+          </div>
         </div>
-        <div className='w-1/2'>
+        <form className='w-1/2' onSubmit={checkoutSubmit}>
           <fieldset className='flex justify-evenly border-t border-gray-600 pt-8 pb-8'>
-            <legend className='text-4xl'>{t('checkout.takeout.title')}</legend>
+            <legend className='text-4xl pl-10'>{t('checkout.takeout.title')}</legend>
             <input type='radio' name='takeout' value='0' id='takeout_no' className='hidden'/>
             <label htmlFor='takeout_no'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
@@ -67,7 +74,7 @@ export default function Checkout() {
             </label>
           </fieldset>
           <fieldset className='flex justify-evenly border-t border-gray-600 pt-8 pb-8'>
-            <legend className='text-4xl'>{t('checkout.payment.title')}</legend>
+            <legend className='text-4xl pl-10 pr-3'>{t('checkout.payment.title')}</legend>
             <input type='radio' name='payment' value='card' id='payment_card' className='hidden' />
             <label htmlFor='payment_card'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
@@ -83,7 +90,7 @@ export default function Checkout() {
               </div>
             </label>
           </fieldset>
-        </div>
+        </form>
       </div>
       <div className='flex justify-evenly w-full'>
         <Link href='/order'>

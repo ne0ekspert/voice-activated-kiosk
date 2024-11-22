@@ -39,6 +39,11 @@ body {
   color: white;
 }
 
+.remove-button {
+  background: red;
+  color: white;
+}
+
 input[type='radio']+label div {
   width: 250px;
   height: 250px;
