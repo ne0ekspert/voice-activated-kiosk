@@ -13,26 +13,31 @@ import { useCart } from '../context/cartContext';
 import { CartItemComponent } from '../order/page';
 import { PageTitle } from '../components/title';
 
-import type { FormEvent } from 'react';
+import type { FormEvent, FormEventHandler } from 'react';
+import { CheckoutJson } from '../api/order/route';
 
 export default function Checkout() {
   const cart = useCart();
   const { t } = useLanguage();
 
-  async function handleCheckout() {
+  async function checkoutSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    
+    const payload: CheckoutJson = {
+      items: cart.item,
+      payment: e.target.elements.payment.value,
+      takeout: e.target.elements.takeout.value === '1'
+    };
+    console.log(e.target);
     const response = await fetch('/api/order', {
       method: 'POST',
-      body: JSON.stringify({ items: cart.item }),
+      body: JSON.stringify(payload),
       headers: { 'Content-Type': 'application/json' },
     });
 
     const data = await response.json();
 
     console.log(data);
-  }
-
-  function checkoutSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
   }
 
   return (
@@ -57,7 +62,7 @@ export default function Checkout() {
         </div>
         <form className='w-1/2' onSubmit={checkoutSubmit}>
           <fieldset className='flex justify-evenly border-t border-gray-600 pt-8 pb-8'>
-            <legend className='text-4xl pl-10'>{t('checkout.takeout.title')}</legend>
+            <legend className='text-4xl pl-10 pr-3'>{t('checkout.takeout.title')}</legend>
             <input type='radio' name='takeout' value='0' id='takeout_no' className='hidden'/>
             <label htmlFor='takeout_no'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
@@ -90,17 +95,17 @@ export default function Checkout() {
               </div>
             </label>
           </fieldset>
+          <div className='flex justify-evenly w-full'>
+            <Link href='/order'>
+              <button className='flex items-center justify-center cancel-button h-16 w-80 rounded-full text-2xl'>
+                <BsCaretLeftFill className='mr-5'/>Back to Order
+              </button>
+            </Link>
+            <button className='flex items-center justify-center action-button h-16 w-80 rounded-full text-2xl'>
+              Submit Order<BsCaretRightFill className='ml-5'/>
+            </button>
+          </div>
         </form>
-      </div>
-      <div className='flex justify-evenly w-full'>
-        <Link href='/order'>
-          <button className='flex items-center justify-center cancel-button h-16 w-80 rounded-full text-2xl'>
-            <BsCaretLeftFill className='mr-5'/>Back to Order
-          </button>
-        </Link>
-        <button onClick={handleCheckout} className='flex items-center justify-center action-button h-16 w-80 rounded-full text-2xl'>
-          Submit Order<BsCaretRightFill className='ml-5'/>
-        </button>
       </div>
     </div>
   );

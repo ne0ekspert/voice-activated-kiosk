@@ -29,7 +29,7 @@ export async function GET(req: Readonly<Request>) {
     FROM items
     LEFT JOIN translations_menu tmenu
       ON tmenu.menuId = items.id AND tmenu.language = ?
-  `, ).all([language]) as CatalogItem[];
+  `).all([language]) as CatalogItem[];
 
   // 각 메뉴의 옵션 가져오기
   for (const item of items) {
