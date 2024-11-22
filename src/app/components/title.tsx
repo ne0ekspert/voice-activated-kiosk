@@ -35,6 +35,7 @@ export function PageTitle({ children }: { children: ReactNode }) {
             backgroundColor: 'rgb(240, 193, 120)',
             color: 'rgb(108, 88, 76)',
           }}
+          defaultValue={language.language}
         >
           <option value='en'>English</option>
           <option value='ko'>한국어</option>
