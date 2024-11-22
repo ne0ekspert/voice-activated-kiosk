@@ -62,7 +62,7 @@ export function CartItemComponent({ item }: { item: CartItem }) {
                 + {option.name} - ${option.price}
                 <hr className='grow border border-gray-500 m-4'/>
                 <button onClick={(e) => removeOption(e, option.id)}
-                        className='remove-button rounded-full pl-3 pr-3 pt-1 pb-1'>
+                        className='light-remove-button rounded-full pl-3 pr-3 pt-1 pb-1'>
                   {t('cart.remove_option')}
                 </button>
               </li>
@@ -88,7 +88,7 @@ export function CartItemComponent({ item }: { item: CartItem }) {
         </div>
       </div>
       <div className='flex justify-between items-center'>
-        <span className='text-2xl'>{t('item.subtotal')}: ${item.subtotal ?? 0}</span>
+        <span className='text-2xl pl-3'>{t('item.subtotal')}: ${item.subtotal ?? 0}</span>
         <button onClick={() => cart.removeItemFromCart(item)}
                 className='remove-button rounded-full pl-5 pr-5 pt-2 pb-2'>{t('cart.remove')}</button>
       </div>

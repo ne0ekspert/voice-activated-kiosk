@@ -44,6 +44,11 @@ body {
   color: white;
 }
 
+.light-remove-button {
+  border: 2px solid red;
+  color: black;
+}
+
 input[type='radio']+label div {
   width: 250px;
   height: 250px;
