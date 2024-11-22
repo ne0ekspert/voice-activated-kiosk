@@ -14,6 +14,7 @@
         "remove_option": "Remove"
     },
     "checkout": {
+        "title": "Checkout",
         "takeout": {
             "title": "Takeout",
             "inside": "Eat here",
@@ -23,6 +24,10 @@
             "title": "Payment",
             "card": "Card",
             "cash": "Cash"
+        },
+        "button": {
+            "to_order": "Back to Order",
+            "submit": "Submit Order"
         }
     }
 }

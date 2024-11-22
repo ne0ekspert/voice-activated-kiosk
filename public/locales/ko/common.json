@@ -14,6 +14,7 @@
         "remove_option": "삭제"
     },
     "checkout": {
+        "title": "결제",    
         "takeout": {
             "title": "포장 여부",
             "inside": "매장 식사",
@@ -23,6 +24,10 @@
             "title": "결제",
             "card": "카드",
             "cash": "현금"
+        },
+        "button": {
+            "to_order": "돌아가기",
+            "submit": "결제하기"
         }
     }
 }
