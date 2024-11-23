@@ -11,10 +11,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<string>('en');
   const [langpack, setLangpack] = useState({});
 
+  type LangpackType = {
+    [key: string]: string | LangpackType;
+  };
+
   useEffect(() => {
     const fetchLangpack = async () => {
         const res = await fetch(`/locales/${language}/common.json`);
-        const langpack = await res.json();
+        const langpack: LangpackType = await res.json();
         return langpack;
     };
 
@@ -25,11 +29,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [language]);
 
   const t = (key: string) => {
-    const getValue = (obj: Record<string, unknown>, path: string): string => {
-        return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+    const getValue = (obj: LangpackType, path: string): string | undefined => {
+      return path.split('.').reduce((acc: LangpackType | string, part: string) => {
+        // If acc is an object (LangpackType), access the property
+        if (typeof acc === 'object' && acc !== null && part in acc) {
+          return acc[part]; // Safe property access
+        }
+        return part; // Return undefined if not an object or property doesn't exist
+      }, obj) as string; // Cast the initial value to LangpackType
     };
 
-    const result = getValue(langpack, key) || key
+    const result = getValue(langpack, key) || key;
 
     return result;
   };

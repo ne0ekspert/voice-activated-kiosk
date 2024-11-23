@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   BsCreditCard,
   BsCashCoin,
@@ -8,41 +9,111 @@ import {
   BsCaretLeftFill,
   BsCaretRightFill
 } from "react-icons/bs";
+
 import { useLanguage } from '../context/languageContext';
 import { useCart } from '../context/cartContext';
-import { CartItemComponent } from '../order/page';
+import { CartItemComponent } from '../components/cartItem';
 import { PageTitle } from '../components/title';
+import { CheckoutJson } from '@/pages/api/order';
 
-import type { FormEvent, FormEventHandler } from 'react';
-import { CheckoutJson } from '../api/order/route';
+import type { MouseEvent, ChangeEvent } from 'react';
+import { match } from 'ts-pattern';
+
+function PaymentPopup({ payment, takeout }: { payment: string; takeout: boolean }) {
+  const [nfcStatus, setNfcStatus] = useState('');
+  const cart = useCart();
+
+  useEffect(() => {
+    const sendOrder = async () => {
+      const payload: CheckoutJson = {
+        items: cart.item,
+        payment,
+        takeout
+      };
+      
+      const response = await fetch('/api/order', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await response.json();
+
+      console.log(data);
+    };
+    const eventSource = new EventSource('/api/payment');
+
+    eventSource.addEventListener('msg', (e) => {
+      const data: { content: string; status: string; } = JSON.parse(e.data);
+
+      if (data.status === 'success') {
+        sendOrder();
+      }
+
+      setNfcStatus(data.status);
+    });
+
+    return () => {
+      eventSource.close();
+    }
+  }, [cart.item, payment, takeout]);
+
+  return (
+    <div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
+      <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5'>
+        <h1 className='text-3xl'>Card Payment</h1>
+        {match(nfcStatus)
+          .with('success', () => (
+            <div>
+              <span>Payment success!</span>
+            </div>
+          ))
+          .with('timeout', () => (
+            <div>
+              <span>Timeout</span>
+            </div>
+          ))
+          .with('error', () => (
+            <div>
+              <span>Error</span>
+            </div>
+          ))
+          .otherwise(() => (
+            <div>
+              <span>Please scan card to the reader</span>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
 
 export default function Checkout() {
+  const [payment, setPayment] = useState('');
+  const [takeout, setTakeout] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const cart = useCart();
   const { t } = useLanguage();
 
-  async function checkoutSubmit(e: FormEvent<HTMLFormElement>) {
+  function togglePaymentPopup(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    
-    const payload: CheckoutJson = {
-      items: cart.item,
-      payment: e.target.elements.payment.value,
-      takeout: e.target.elements.takeout.value === '1'
-    };
-    console.log(e.target);
-    const response = await fetch('/api/order', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      headers: { 'Content-Type': 'application/json' },
-    });
+    setProcessingPayment(prev => !prev);
+  }
 
-    const data = await response.json();
+  function takeoutChange(e: ChangeEvent<HTMLInputElement>) {
+    e.preventDefault();
+    setTakeout(e.target.value === '1');
+  }
 
-    console.log(data);
+  function paymentChange(e: ChangeEvent<HTMLInputElement>) {
+    e.preventDefault();
+    setPayment(e.target.value);
   }
 
   return (
     <div>
-      <PageTitle>Checkout</PageTitle>
+      <PageTitle>{t('checkout.title')}</PageTitle>
       <div className='flex'>
         <div className='flex flex-col w-1/2 grow overflow-y-auto max-h-85vh'>
           <div className='grow'>
@@ -60,17 +131,19 @@ export default function Checkout() {
             <p className='text-3xl font-bold m-5'>{t('cart.total')}: ${cart.total}</p>
           </div>
         </div>
-        <form className='w-1/2' onSubmit={checkoutSubmit}>
-          <fieldset className='flex justify-evenly border-t border-gray-600 pt-8 pb-8'>
+        <div className='w-1/2'>
+          <fieldset className='flex justify-evenly border-t border-gray-600 pt-8 pb-8' >
             <legend className='text-4xl pl-10 pr-3'>{t('checkout.takeout.title')}</legend>
-            <input type='radio' name='takeout' value='0' id='takeout_no' className='hidden'/>
+            <input type='radio' name='takeout' value={0} id='takeout_no'
+                   className='hidden' onChange={takeoutChange} />
             <label htmlFor='takeout_no'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
                 <BsPinMap size={80} />
                 <span className='text-2xl'>{t('checkout.takeout.inside')}</span>
               </div>
             </label>
-            <input type='radio' name='takeout' value='1' id='takeout_yes' className='hidden' />
+            <input type='radio' name='takeout' value={1} id='takeout_yes'
+                   className='hidden' onChange={takeoutChange} />
             <label htmlFor='takeout_yes'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
                 <BsReply size={80} />
@@ -80,14 +153,16 @@ export default function Checkout() {
           </fieldset>
           <fieldset className='flex justify-evenly border-t border-gray-600 pt-8 pb-8'>
             <legend className='text-4xl pl-10 pr-3'>{t('checkout.payment.title')}</legend>
-            <input type='radio' name='payment' value='card' id='payment_card' className='hidden' />
+            <input type='radio' name='payment' value='card' id='payment_card'
+                   className='hidden' onChange={paymentChange} />
             <label htmlFor='payment_card'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
                 <BsCreditCard size={80} />
                 <span className='text-2xl'>{t('checkout.payment.card')}</span>
               </div>
             </label>
-            <input type='radio' name='payment' value='cash' id='payment_cash' className='hidden'/>
+            <input type='radio' name='payment' value='cash' id='payment_cash'
+                   className='hidden' onChange={paymentChange} />
             <label htmlFor='payment_cash'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
                 <BsCashCoin size={80} />
@@ -98,15 +173,17 @@ export default function Checkout() {
           <div className='flex justify-evenly w-full'>
             <Link href='/order'>
               <button className='flex items-center justify-center cancel-button h-16 w-80 rounded-full text-2xl'>
-                <BsCaretLeftFill className='mr-5'/>Back to Order
+                <BsCaretLeftFill className='mr-5'/>{t('checkout.button.to_order')}
               </button>
             </Link>
-            <button className='flex items-center justify-center action-button h-16 w-80 rounded-full text-2xl'>
-              Submit Order<BsCaretRightFill className='ml-5'/>
+            <button onClick={togglePaymentPopup}
+                    className='flex items-center justify-center action-button h-16 w-80 rounded-full text-2xl'>
+              {t('checkout.button.submit')}<BsCaretRightFill className='ml-5'/>
             </button>
           </div>
-        </form>
+        </div>
       </div>
+      {processingPayment && <PaymentPopup payment={payment} takeout={takeout}/>}
     </div>
   );
 }

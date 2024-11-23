@@ -1,12 +1,14 @@
 'use client'
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { RealtimeClient } from '@openai/realtime-api-beta';
-import { WavRecorder, WavStreamPlayer } from '../lib/wavtools';
-import { useCart } from '../context/cartContext';
-import { useCatalog } from '../context/catalogContext';
 import { v4 as uuidv4 } from 'uuid';
+import { WavRecorder, WavStreamPlayer } from '../lib/wavtools';
+import { RealtimeClient } from '@openai/realtime-api-beta';
+import type { ItemType } from '@openai/realtime-api-beta/dist/lib/client';
+import type { ItemContentDeltaType } from '@openai/realtime-api-beta/dist/lib/conversation';
 
+import { useCart } from '../context/cartContext';
 import type { CartItemOption } from '../context/cartContext';
+import { useCatalog } from '../context/catalogContext';
 import { useLanguage } from '../context/languageContext';
 
 type RealtimeEvent = {
@@ -78,7 +80,6 @@ const AudioChat: React.FC = () => {
     });
   }, []);
 
-  // Realtime API 클라이언트 설정
   useEffect(() => {
     const client = clientRef.current;
 
@@ -93,6 +94,11 @@ const AudioChat: React.FC = () => {
         threshold: 0.7,
       },
     });
+  }, []);
+
+  // Realtime API 클라이언트 설정
+  useEffect(() => {
+    const client = clientRef.current;
 
     const existingTools = Object.keys(client.tools) || [];
     console.log(existingTools);
@@ -174,7 +180,7 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         cart.item.forEach((item) => {
-          result += `${item.quantity}x ${item.name} = $${item.subtotal ?? 0}\n`;
+          result += `[${item.id}] ${item.quantity}x ${item.name} = $${item.subtotal ?? 0}\n`;
         });
 
         console.log("Result:", result);
@@ -427,10 +433,7 @@ const AudioChat: React.FC = () => {
     const client = clientRef.current;
     const wavStreamPlayer = wavStreamPlayerRef.current;
     
-    // handle realtime events from client + server for event logging
-    client.on('realtime.event', (realtimeEvent: RealtimeEvent) => {
-    });
-    client.on('error', (event) => console.error(event));
+    //client.on('error', (event) => console.error(event));
     client.on('conversation.interrupted', async () => {
       const trackSampleOffset = await wavStreamPlayer.interrupt();
       if (trackSampleOffset?.trackId) {
@@ -438,13 +441,12 @@ const AudioChat: React.FC = () => {
         client.cancelResponse(trackId, offset);
       }
     });
-    client.on('conversation.updated', async ({ item, delta }: any) => {
-      //const items = client.conversation.getItems();
-      
+    client.on('conversation.updated', async ({ item, delta }: { item: ItemType, delta: ItemContentDeltaType }) => {
       if (delta?.audio) {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
       }
-      if (item.status === 'completed' && item.formatted.audio?.length) {
+
+      if ('status' in item && item.status === 'completed' && item.formatted.audio?.length) {
         const wavFile = await WavRecorder.decode(
           item.formatted.audio,
           24000,
