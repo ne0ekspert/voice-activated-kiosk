@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 import type { NextApiRequest, NextApiResponse } from "next";
-import pn532 from 'pn532';
+//import pn532 from 'pn532';
 //import i2c from 'i2c';
 
 export type PaymentInfo = {
@@ -14,7 +14,7 @@ class NFC extends EventEmitter {
 
         this.emit('ready')
 
-        this.on('newListener', (event: string) => {
+        this.on('newListener', () => {
             this.emit('tag', { uid: 1234 });
         });
     }
@@ -25,15 +25,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.writeHead(200, {
         'Connection': 'keep-alive',
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache, no-transform'
     });
-    res.write('event: msg\n');
-    res.write('data: test\n\n')
 
     // Set a timeout for the long-polling (e.g., 30 seconds)
     const timeout = setTimeout(() => {
         cleanup();
-        JSON.stringify({ message: 'No tag detected', status: 'timeout' });
+        res.write('event: msg\n');
+        res.write('data: ');
+        res.write(JSON.stringify({ content: 'No tag detected', status: 'timeout' }));
+        res.write('\n\n');
+        res.end();
     }, 30000);
 
     function cleanup() {
@@ -46,18 +48,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('Listening for a tag scan...');
         rfid.on('tag', (tag) => {
             cleanup();
+            res.write('event: msg\n');
             if (tag) {
                 console.log('Tag detected:', tag.uid);
-                JSON.stringify({ cardNumber: tag.uid, status: 'success' });
+                res.write(`data: ${JSON.stringify({ content: tag.uid, status: 'success' })}\n\n`);
             } else {
-                JSON.stringify({ message: 'Empty tag detected', status: 'error' });
+
+                res.write(`data: ${JSON.stringify({ content: 'Empty tag detected', status: 'error' })}\n\n`);
             }
+            res.end();
         });
     });
 
     rfid.on('error', (err) => {
         cleanup();
         console.error('Error:', err);
-        JSON.stringify({ message: 'NFC error', status: 'error' });
+        res.write('event: msg\n');
+        res.write(`data: ${JSON.stringify({ content: 'NFC error', status: 'error' })}\n`);
+        res.end();
     });
 }
