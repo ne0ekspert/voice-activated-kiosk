@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 export type CatalogItemOption = {
   id: number;
@@ -16,8 +16,13 @@ export type CatalogItem = {
   options: CatalogItemOption[];
 };
 
-export async function GET(req: Readonly<Request>) {
-  const language = req.headers.get('accept-language')?.split(',')[0] || 'en';
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']); // Specify allowed methods
+    res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const language = req.headers['accept-language']?.split(',')[0] || 'en';
 
   // 메뉴 데이터 가져오기
   const items = db.prepare(`
@@ -48,5 +53,5 @@ export async function GET(req: Readonly<Request>) {
     item.options = options;
   }
 
-  return NextResponse.json(items);
+  res.json(items);
 }

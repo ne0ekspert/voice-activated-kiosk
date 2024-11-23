@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { CatalogItemOption } from '../api/items/route'
+import type { CatalogItemOption } from '@/pages/api/items'
 import { useLanguage } from './languageContext';
 import { useCatalog } from './catalogContext';
 

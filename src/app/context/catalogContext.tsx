@@ -1,6 +1,6 @@
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { CatalogItem } from '../api/items/route';
+import { CatalogItem } from '@/pages/api/items';
 import { useLanguage } from './languageContext';
 
 const CatalogContext = createContext<CatalogItem[] | undefined>(undefined);

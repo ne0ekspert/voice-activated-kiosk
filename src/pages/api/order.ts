@@ -1,5 +1,6 @@
 import { CartItem } from '@/app/context/cartContext';
 import { db } from '@/app/lib/db';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
 
 export type CheckoutJson = {
@@ -8,8 +9,8 @@ export type CheckoutJson = {
   takeout: boolean;
 };
 
-export async function POST(request: Request) {
-  const body: CheckoutJson = await request.json();
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const body: CheckoutJson = await req.json();
 
   let result = 'Order received:\n';
   let total = 0;
@@ -55,5 +56,5 @@ export async function POST(request: Request) {
 
   if (!response.ok) console.error('Webhook failed!', response);
 */
-  return NextResponse.json({ message: 'Order submitted successfully!' });
+  res.json({ message: 'Order submitted successfully!' });
 }
