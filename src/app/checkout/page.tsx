@@ -18,8 +18,7 @@ import { PageTitle } from '../components/title';
 import { CheckoutJson } from '@/pages/api/order';
 
 import type { MouseEvent, ChangeEvent } from 'react';
-import { useParams } from 'next/navigation';
-import { useRouter } from 'next/router';
+import { useParams, useRouter } from 'next/navigation';
 
 function CashPaymentPopup({ takeout }: { takeout: boolean }) {
   const cart = useCart();
