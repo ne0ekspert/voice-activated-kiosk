@@ -1,25 +1,13 @@
-import EventEmitter from 'events';
 import type { NextApiRequest, NextApiResponse } from "next";
-//import pn532 from 'pn532';
-//import i2c from 'i2c';
+import pn532 from 'pn532';
+import i2c from 'i2c';
 
 export type PaymentInfo = {
     cardNumber: number;
 }
 
-//const wire = new i2c(pn532.I2C_ADDRESS, {device: '/dev/i2c-1'});
-class NFC extends EventEmitter {
-    constructor() {
-        super();
-
-        this.emit('ready')
-
-        this.on('newListener', () => {
-            this.emit('tag', { uid: 1234 });
-        });
-    }
-}
-const rfid = new NFC();
+const wire = new i2c(pn532.I2C_ADDRESS, {device: '/dev/i2c-1'});
+const rfid = new pn532.PN532(wire);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     res.writeHead(200, {

@@ -2,7 +2,7 @@ import { EventEmitter } from "stream";
 
 declare module 'pn532' {
     class PN532 extends EventEmitter {
-        constructor(hal: { name: string }, options?: object);
+        constructor(hal: object, options?: object);
         sendCommand(commandBuffer: Array<number>);
         configureSecureAccessModule();
         getFirmwareVersion();
@@ -14,4 +14,5 @@ declare module 'pn532' {
         writeNdefData(data);
         authenticateBlock(uid, options?: object);
     }
+    const I2C_ADDRESS: number;
 };
