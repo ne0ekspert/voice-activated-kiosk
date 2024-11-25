@@ -18,11 +18,12 @@ import { PageTitle } from '../components/title';
 import { CheckoutJson } from '@/pages/api/order';
 
 import type { MouseEvent, ChangeEvent } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 function CashPaymentPopup({ takeout }: { takeout: boolean }) {
   const cart = useCart();
   const { t } = useLanguage();
+  const router = useRouter();
 
   useEffect(() => {
     const sendOrder = async () => {
@@ -44,11 +45,20 @@ function CashPaymentPopup({ takeout }: { takeout: boolean }) {
     };
 
     sendOrder();
-  })
+  }, []);
+
+  function endOrder(e: MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+
+    cart.clearCart();
+    router.replace('/');
+  }
+
   return (
     <div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
       <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5'>
         <h1 className='text-3xl'>{t('payment.cash.title')}</h1>
+        <button onClick={endOrder}>Continue</button>
       </div>
     </div>
   )
@@ -57,6 +67,7 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
   const [nfcStatus, setNfcStatus] = useState('');
   const cart = useCart();
   const { t } = useLanguage();
+  const router = useRouter();
 
   useEffect(() => {
     const sendOrder = async () => {
@@ -94,6 +105,13 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
     }
   }, [cart.item, takeout]);
 
+  function endOrder(e: MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+
+    cart.clearCart();
+    router.replace('/');
+  }
+
   return (
     <div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
       <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5'>
@@ -120,32 +138,31 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
             </div>
           ))
         }
+        <button onClick={endOrder}>Continue</button>
       </div>
     </div>
   );
 }
 
 export default function Checkout() {
+  const [method, setMethod] = useState('');
   const [takeout, setTakeout] = useState(false);
-  const [processingPayment, setProcessingPayment] = useState(false);
   const cart = useCart();
   const { t } = useLanguage();
   const router = useRouter();
-  const params: { method?: string } | null = useParams();
+  const params = useSearchParams();
 
   function togglePaymentPopup(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    setProcessingPayment(prev => !prev);
+    router.replace(`?method=${method}`)
   }
 
   function takeoutChange(e: ChangeEvent<HTMLInputElement>) {
-    e.preventDefault();
     setTakeout(e.target.value === '1');
   }
 
   function paymentChange(e: ChangeEvent<HTMLInputElement>) {
-    e.preventDefault();
-    router.replace(`?method=${e.target.value}`)
+    setMethod(e.target.value);
   }
 
   return (
@@ -220,7 +237,7 @@ export default function Checkout() {
           </div>
         </div>
       </div>
-      {match(params.method)
+      {match(params.get('method'))
         .with('card', () => (
           <CardPaymentPopup takeout={takeout} />
         ))
