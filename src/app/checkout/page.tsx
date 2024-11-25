@@ -18,8 +18,42 @@ import { PageTitle } from '../components/title';
 import { CheckoutJson } from '@/pages/api/order';
 
 import type { MouseEvent, ChangeEvent } from 'react';
+import { useParams } from 'next/navigation';
+import { useRouter } from 'next/router';
 
-function PaymentPopup({ payment, takeout }: { payment: string; takeout: boolean }) {
+function CashPaymentPopup({ takeout }: { takeout: boolean }) {
+  const cart = useCart();
+  
+  useEffect(() => {
+    const sendOrder = async () => {
+      const payload: CheckoutJson = {
+        items: cart.item,
+        payment: 'cash',
+        takeout
+      }
+
+      const response = await fetch('/api/order', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await response.json();
+
+      console.log(data);
+    };
+
+    sendOrder();
+  })
+  return (
+    <div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
+      <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5'>
+        <h1 className='text-3xl'>Cash Payment</h1>
+      </div>
+    </div>
+  )
+}
+function CardPaymentPopup({ takeout }: { takeout: boolean }) {
   const [nfcStatus, setNfcStatus] = useState('');
   const cart = useCart();
 
@@ -27,7 +61,7 @@ function PaymentPopup({ payment, takeout }: { payment: string; takeout: boolean 
     const sendOrder = async () => {
       const payload: CheckoutJson = {
         items: cart.item,
-        payment,
+        payment: 'card',
         takeout
       };
       
@@ -91,11 +125,12 @@ function PaymentPopup({ payment, takeout }: { payment: string; takeout: boolean 
 }
 
 export default function Checkout() {
-  const [payment, setPayment] = useState('');
   const [takeout, setTakeout] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const cart = useCart();
   const { t } = useLanguage();
+  const router = useRouter();
+  const params: { method?: string } | null = useParams();
 
   function togglePaymentPopup(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -109,7 +144,7 @@ export default function Checkout() {
 
   function paymentChange(e: ChangeEvent<HTMLInputElement>) {
     e.preventDefault();
-    setPayment(e.target.value);
+    router.replace(`?method=${e.target.value}`)
   }
 
   return (
@@ -184,7 +219,17 @@ export default function Checkout() {
           </div>
         </div>
       </div>
-      {processingPayment && <PaymentPopup payment={payment} takeout={takeout}/>}
+      {match(params.method)
+        .with('card', () => (
+          <CardPaymentPopup takeout={takeout} />
+        ))
+        .with('cash', () => (
+          <CashPaymentPopup takeout={takeout} />
+        ))
+        .otherwise(() => (
+          <></>
+        ))
+      }
     </div>
   );
 }

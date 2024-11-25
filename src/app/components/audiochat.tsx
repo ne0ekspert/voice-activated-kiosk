@@ -10,6 +10,7 @@ import { useCart } from '../context/cartContext';
 import type { CartItemOption } from '../context/cartContext';
 import { useCatalog } from '../context/catalogContext';
 import { useLanguage } from '../context/languageContext';
+import { useRouter } from 'next/router';
 
 type RealtimeEvent = {
   content: string;
@@ -50,6 +51,7 @@ const AudioChat: React.FC = () => {
   const catalog = useCatalog();
   const cart = useCart();
   const { setLanguage } = useLanguage();
+  const router = useRouter();
 
   const connectConversation = useCallback(async () => {
     const client = clientRef.current;
@@ -425,6 +427,31 @@ const AudioChat: React.FC = () => {
       },
       async ({ lang }: { lang: string }) =>  {
         setLanguage(lang);
+      }
+    );
+
+    client.addTool(
+      {
+        name: 'select_payment',
+        description: 'Select payment',
+        parameters: {
+          type: 'object',
+          properties: {
+            method: {
+              type: 'string',
+              enum: ['card', 'cash'],
+              description: 'Payment method'
+            }
+          },
+          required: ['method']
+        }
+      },
+      async ({ method }: { method: string }) => {
+        if (method === 'card') {
+          router.replace('/checkout?method=card');
+        } else if (method === 'cash') {
+          router.replace('/checkout?method=cash');
+        }
       }
     )
   }, [cart, catalog, setLanguage]);
