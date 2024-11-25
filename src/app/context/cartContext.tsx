@@ -64,9 +64,34 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }, [catalog, language.language]);
 
-  const addItemToCart = (item: CartItem) => {
-    item.subtotal = item.price * item.quantity;
+  useEffect(() => {
+    const updatedCart = cart.map((cartItem) => {
+      const optionsSubtotal = cartItem.options.reduce(
+        (acc, option) => acc + option.quantity * option.price,
+        0
+      );
 
+      return {
+        ...cartItem,
+        subtotal: (cartItem.price + optionsSubtotal) * cartItem.quantity,
+      };
+    });
+
+    // Perform shallow comparison instead of JSON.stringify
+    const isCartDifferent = updatedCart.some((item, index) => {
+      const currentItem = cart[index];
+      return (
+        item.subtotal !== currentItem.subtotal || 
+        item.quantity !== currentItem.quantity
+      );
+    });
+
+    if (isCartDifferent) {
+      setCart(updatedCart);
+    }
+  }, [cart]);
+
+  const addItemToCart = (item: CartItem) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((i) => i.id === item.id);
       if (existingItem) {
@@ -91,7 +116,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         return {
           ...cartItem,
           options: updatedOptions,
-          subtotal: cartItem.price * cartItem.quantity + updatedOptions.reduce((a, b) => a + b.price * b.quantity, 0)
         };
       }
       return cartItem;

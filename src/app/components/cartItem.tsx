@@ -39,6 +39,19 @@ export function CartItemComponent({ item }: { item: CartItem }) {
     cart.removeOptionFromItem(item, option);
   };
 
+  const decrease = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    if (item.quantity > 1)
+      cart.changeItemQuantity(item, --item.quantity);
+  }
+
+  const increase = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    cart.changeItemQuantity(item, ++item.quantity);
+  }
+
   return (
     <li key={item.id} className='border-b border-gray-400 pb-2 pt-2'>
       <div className='flex'>
@@ -46,7 +59,17 @@ export function CartItemComponent({ item }: { item: CartItem }) {
           <Image src={catalogItem.imageUri} alt={item.name} width='100' height='100' className='aspect-square p-2' />
         </div>
         <div className='w-full'>
-          <span className='text-2xl'>{item.quantity}x {item.name} - ${item.price * item.quantity}</span>
+          <span className='flex justify-between text-2xl mr-10 w-3/4'>
+            <span>{item.name}</span>
+            <div className="flex justify-between w-1/4">
+              <button onClick={decrease}
+                      className='border border-gray-500 aspect-square h-8 rounded-full'> - </button>
+              {item.quantity}
+              <button onClick={increase}
+                      className='border border-gray-500 aspect-square h-8 rounded-full'> + </button>
+            </div>
+            <span className='w-20 text-right'>${item.price * item.quantity}</span>
+          </span>
           <ul>
             {item.options.map((option) => (
               <li key={option.id} className='flex items-center w-full pt-2 pb-2'>

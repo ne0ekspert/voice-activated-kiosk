@@ -9,6 +9,7 @@ import {
   BsCaretLeftFill,
   BsCaretRightFill
 } from "react-icons/bs";
+import { match } from 'ts-pattern';
 
 import { useLanguage } from '../context/languageContext';
 import { useCart } from '../context/cartContext';
@@ -17,7 +18,6 @@ import { PageTitle } from '../components/title';
 import { CheckoutJson } from '@/pages/api/order';
 
 import type { MouseEvent, ChangeEvent } from 'react';
-import { match } from 'ts-pattern';
 
 function PaymentPopup({ payment, takeout }: { payment: string; takeout: boolean }) {
   const [nfcStatus, setNfcStatus] = useState('');
@@ -41,6 +41,7 @@ function PaymentPopup({ payment, takeout }: { payment: string; takeout: boolean 
 
       console.log(data);
     };
+
     const eventSource = new EventSource('/api/payment');
 
     eventSource.addEventListener('msg', (e) => {
