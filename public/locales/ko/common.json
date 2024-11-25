@@ -1,4 +1,5 @@
 {
+    "call_manager": "직원 부르기",
     "menu": {
         "title": "메뉴",
         "to_checkout": "결제하기"

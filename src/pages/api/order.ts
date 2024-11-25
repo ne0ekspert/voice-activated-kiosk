@@ -1,7 +1,6 @@
 import { CartItem } from '@/app/context/cartContext';
 import { db } from '@/app/lib/db';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { NextResponse } from 'next/server';
 
 export type CheckoutJson = {
   items: CartItem[];
@@ -10,7 +9,7 @@ export type CheckoutJson = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const body: CheckoutJson = await req.json();
+  const body: CheckoutJson = await req.body();
 
   let result = 'Order received:\n';
   let total = 0;

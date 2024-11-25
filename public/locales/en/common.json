@@ -1,4 +1,5 @@
 {
+    "call_manager": "Call Manager",
     "menu": {
         "title": "Menu",
         "to_checkout": "To Checkout"
