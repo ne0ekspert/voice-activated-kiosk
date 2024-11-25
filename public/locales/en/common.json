@@ -30,5 +30,17 @@
             "to_order": "Back to Order",
             "submit": "Submit Order"
         }
+    },
+    "payment": {
+        "cash": {
+            "title": "Cash Payment"
+        },
+        "card": {
+            "title": "Card Payment",
+            "success": "Payment success!",
+            "timeout": "timeout",
+            "error": "Error",
+            "scan": "Please scan card to the reader"
+        }
     }
 }

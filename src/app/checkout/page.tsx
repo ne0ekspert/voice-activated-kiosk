@@ -23,7 +23,8 @@ import { useRouter } from 'next/router';
 
 function CashPaymentPopup({ takeout }: { takeout: boolean }) {
   const cart = useCart();
-  
+  const { t } = useLanguage();
+
   useEffect(() => {
     const sendOrder = async () => {
       const payload: CheckoutJson = {
@@ -48,7 +49,7 @@ function CashPaymentPopup({ takeout }: { takeout: boolean }) {
   return (
     <div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
       <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5'>
-        <h1 className='text-3xl'>Cash Payment</h1>
+        <h1 className='text-3xl'>{t('payment.cash.title')}</h1>
       </div>
     </div>
   )
@@ -56,6 +57,7 @@ function CashPaymentPopup({ takeout }: { takeout: boolean }) {
 function CardPaymentPopup({ takeout }: { takeout: boolean }) {
   const [nfcStatus, setNfcStatus] = useState('');
   const cart = useCart();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const sendOrder = async () => {
@@ -91,31 +93,31 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
     return () => {
       eventSource.close();
     }
-  }, [cart.item, payment, takeout]);
+  }, [cart.item, takeout]);
 
   return (
     <div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
       <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5'>
-        <h1 className='text-3xl'>Card Payment</h1>
+        <h1 className='text-3xl'>{t('payment.card.title')}</h1>
         {match(nfcStatus)
           .with('success', () => (
             <div>
-              <span>Payment success!</span>
+              <span>{t('payment.card.success')}</span>
             </div>
           ))
           .with('timeout', () => (
             <div>
-              <span>Timeout</span>
+              <span>{t('payment.card.timeout')}</span>
             </div>
           ))
           .with('error', () => (
             <div>
-              <span>Error</span>
+              <span>{t('payment.card.error')}</span>
             </div>
           ))
           .otherwise(() => (
             <div>
-              <span>Please scan card to the reader</span>
+              <span>{t('payment.card.scan')}</span>
             </div>
           ))
         }

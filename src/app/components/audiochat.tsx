@@ -10,7 +10,7 @@ import { useCart } from '../context/cartContext';
 import type { CartItemOption } from '../context/cartContext';
 import { useCatalog } from '../context/catalogContext';
 import { useLanguage } from '../context/languageContext';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 type RealtimeEvent = {
   content: string;

@@ -30,5 +30,17 @@
             "to_order": "돌아가기",
             "submit": "결제하기"
         }
+    },
+    "payment": {
+        "cash": {
+            "title": "현금 결제"
+        },
+        "card": {
+            "title": "카드 결제",
+            "success": "결제 성공!",
+            "timeout": "시간 초과",
+            "error": "오류",
+            "scan": "카드를 스캔해 주세요"
+        }
     }
 }
