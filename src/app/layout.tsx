@@ -5,6 +5,7 @@ import "./globals.css";
 import { CatalogProvider } from "./context/catalogContext";
 import { CartProvider } from "./context/cartContext";
 import { LanguageProvider } from "./context/languageContext";
+import { Suspense } from "react";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -35,7 +36,9 @@ export default function RootLayout({
         <LanguageProvider>
           <CatalogProvider>
             <CartProvider>
-              {children}
+              <Suspense fallback={<>Loading...</>}>
+                {children}
+              </Suspense>
             </CartProvider>
           </CatalogProvider>
         </LanguageProvider>
