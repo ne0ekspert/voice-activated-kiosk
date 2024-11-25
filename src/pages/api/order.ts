@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   else result += 'eating here.'
 
   console.log(result);
-/*
+
   const response = await fetch(process.env.CHECKOUT_WEBHOOK_URL || '', {
     method: 'POST',
     body: JSON.stringify({
@@ -54,6 +54,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   if (!response.ok) console.error('Webhook failed!', response);
-*/
+  
   res.json({ message: 'Order submitted successfully!' });
 }
