@@ -31,7 +31,7 @@ export default function Menu() {
       <PageTitle>{t('menu.title')}</PageTitle>
 
       <div className='flex grow'>
-        <div className='w-1/2 p-2 border-r border-gray-500 overflow-y-auto max-h-85vh'>
+        <div className='w-1/2 p-2 border-r border-gray-500 overflow-y-auto max-h-80vh'>
           <ul>
             {catalog.map((item) => (
               <li key={item.id} className='flex items-center text-xl border-b border-gray-500' onClick={() => handleAddToCart(item)}>
@@ -42,7 +42,7 @@ export default function Menu() {
           </ul>
         </div>
 
-        <div className='flex flex-col w-1/2 p-2 max-h-85vh'>
+        <div className='flex flex-col w-1/2 p-2 max-h-80vh'>
           <ul className='grow overflow-y-auto'>
             {cart.item.map(item => (
               <CartItemComponent item={item} key={item.id} />

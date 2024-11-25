@@ -33,6 +33,10 @@ body {
   max-height: 85vh; /* Adjust this as per your design */
 }
 
+.max-h-80vh {
+  max-height: 80vh;
+}
+
 .action-button {
   background-color: #6c584c;
   color: white;
@@ -54,8 +58,8 @@ body {
 }
 
 input[type='radio']+label div {
-  width: 250px;
-  height: 250px;
+  width: 200px;
+  height: 200px;
   background: white;
   color: black;
   text-align: center;

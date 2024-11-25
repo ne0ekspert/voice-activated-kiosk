@@ -116,7 +116,7 @@ export default function Checkout() {
     <div>
       <PageTitle>{t('checkout.title')}</PageTitle>
       <div className='flex'>
-        <div className='flex flex-col w-1/2 grow overflow-y-auto max-h-85vh'>
+        <div className='flex flex-col w-1/2 grow overflow-y-auto max-h-80vh'>
           <div className='grow'>
             {cart.item.length === 0 ? (
               <p>Your cart is empty.</p>
@@ -139,7 +139,7 @@ export default function Checkout() {
                    className='hidden' onChange={takeoutChange} />
             <label htmlFor='takeout_no'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
-                <BsPinMap size={80} />
+                <BsPinMap size={60} />
                 <span className='text-2xl'>{t('checkout.takeout.inside')}</span>
               </div>
             </label>
@@ -147,7 +147,7 @@ export default function Checkout() {
                    className='hidden' onChange={takeoutChange} />
             <label htmlFor='takeout_yes'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
-                <BsReply size={80} />
+                <BsReply size={60} />
                 <span className='text-2xl'>{t('checkout.takeout.outside')}</span>
               </div>
             </label>
@@ -158,7 +158,7 @@ export default function Checkout() {
                    className='hidden' onChange={paymentChange} />
             <label htmlFor='payment_card'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
-                <BsCreditCard size={80} />
+                <BsCreditCard size={60} />
                 <span className='text-2xl'>{t('checkout.payment.card')}</span>
               </div>
             </label>
@@ -166,7 +166,7 @@ export default function Checkout() {
                    className='hidden' onChange={paymentChange} />
             <label htmlFor='payment_cash'>
               <div className='flex flex-col justify-center items-center rounded-3xl'>
-                <BsCashCoin size={80} />
+                <BsCashCoin size={60} />
                 <span className='text-2xl'>{t('checkout.payment.cash')}</span>
               </div>
             </label>
