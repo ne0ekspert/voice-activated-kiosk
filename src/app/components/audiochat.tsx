@@ -46,7 +46,6 @@ const AudioChat: React.FC = () => {
   );
 
   const startTimeRef = useRef<string | null>(null);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
   const catalog = useCatalog();
   const cart = useCart();
@@ -486,8 +485,8 @@ const AudioChat: React.FC = () => {
 
   return (
     <div>
-      <button onClick={connectConversation} disabled={isConnected}>
-        {isConnected ? 'Connected' : 'Connect to Audio Chat'}
+      <button onClick={connectConversation} disabled={clientRef.current.isConnected()}>
+        {clientRef.current.isConnected() ? 'Connected' : 'Connect to Audio Chat'}
       </button>
       <div>
         {realtimeEvents.map((event, idx) => (
