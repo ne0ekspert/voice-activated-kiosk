@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id = ?
     `).get([item.catalogid]) as { name: string; price: number; };
 
-    result += `${item.quantity}x ${catalogItem.name} - $${catalogItem.price * item.quantity}\n`;
+    result += `${item.quantity}x ${catalogItem.name} - ${catalogItem.price * item.quantity}KRW\n`;
     for (const option of item.options) {
       const catalogOption = db.prepare(`
         SELECT
@@ -33,12 +33,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         WHERE
           id = ?
       `).get([option.id]) as { name: string; price: number; };
-      result += `+ ${option.quantity}x ${catalogOption.name} - $${catalogOption.price * option.quantity}\n`;
+      result += `+ ${option.quantity}x ${catalogOption.name} - ${catalogOption.price * option.quantity}KRW\n`;
     }
     result += '\n';
     total += catalogItem.price * item.quantity;
   }
-  result += `Total: $${total}\n`;
+  result += `Total: ${total}KRW\n`;
   result += `Payment using ${body.payment}, `
   if (body.takeout) result += 'taking out.';
   else result += 'eating here.'

@@ -124,7 +124,7 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         catalog.forEach((menu) => {
-          result += `${menu.name}, $${menu.price}\n`;
+          result += `${menu.name}, ${menu.price}KRW\n`;
         });
 
         console.log(result);
@@ -156,7 +156,7 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         options.forEach((option) => {
-          result += `${option.name}, $${option.price}\n`;
+          result += `${option.name}, ${option.price}KRW\n`;
         });
 
         console.log("Result:", result);
@@ -182,7 +182,7 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         cart.item.forEach((item) => {
-          result += `[${item.id}] ${item.quantity}x ${item.name} = $${item.subtotal ?? 0}\n`;
+          result += `[${item.id}] ${item.quantity}x ${item.name} = ${item.subtotal ?? 0}KRW\n`;
         });
 
         console.log("Result:", result);

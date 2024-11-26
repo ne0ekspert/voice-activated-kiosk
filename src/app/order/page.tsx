@@ -36,7 +36,7 @@ export default function Menu() {
             {catalog.map((item) => (
               <li key={item.id} className='flex items-center text-xl border-b border-gray-500' onClick={() => handleAddToCart(item)}>
                 <Image src={item.imageUri} alt={item.name} width='100' height='100' className='p-2' />
-                {item.name} - ${item.price}
+                {item.name} - {item.price}{t('item.price.unit')}
               </li>
             ))}
           </ul>
@@ -49,7 +49,7 @@ export default function Menu() {
             ))}
           </ul>
           <div>
-            <div className='text-3xl font-bold m-5'>{t('cart.total')}: ${cart.total}</div>
+            <div className='text-3xl font-bold m-5'>{t('cart.total')}: {cart.total}{t('item.price.unit')}</div>
             <div className='flex justify-evenly w-full'>
               <button onClick={cart.clearCart} className='flex items-center justify-center cancel-button h-16 w-80 rounded-full text-2xl'>
                 <BsXLg className='mr-5' />{t('cart.clear')}
