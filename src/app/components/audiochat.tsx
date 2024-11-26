@@ -63,7 +63,6 @@ const AudioChat: React.FC = () => {
     }
 
     startTimeRef.current = new Date().toISOString();
-    setIsConnected(true);
     setRealtimeEvents([]);
 
     // Start capturing audio from the microphone
