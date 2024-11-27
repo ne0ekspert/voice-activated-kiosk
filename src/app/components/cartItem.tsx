@@ -73,7 +73,7 @@ export function CartItemComponent({ item }: { item: CartItem }) {
           <ul>
             {item.options.map((option) => (
               <li key={option.id} className='flex items-center w-full pt-2 pb-2'>
-                + {option.name} - ${option.price}
+                + {option.name} - {option.price}{t('item.price.unit')}
                 <hr className='grow border border-gray-500 m-4'/>
                 <button onClick={(e) => removeOption(e, option.id)}
                         className='light-remove-button rounded-full pl-3 pr-3 pt-1 pb-1'>
