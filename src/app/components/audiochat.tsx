@@ -1,5 +1,5 @@
 'use client'
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { WavRecorder, WavStreamPlayer } from '../lib/wavtools';
 import { RealtimeClient } from '@openai/realtime-api-beta';
@@ -13,7 +13,30 @@ import { useLanguage } from '../context/languageContext';
 import { useRouter } from 'next/navigation';
 
 type RealtimeEvent = {
-  content: string;
+  time: `${number}-${number}-${number}T${number}:${number}:${number}.${number}Z`;
+  source: 'server' | 'client';
+  event: {
+    event_id: string;
+    response: {
+      id: string;
+      object: string;
+      output: [];
+      status: string;
+      status_details: {
+        error?: {
+          code: string;
+          message: string;
+          type: string
+        }
+      };
+      usage: {
+        total_tokens: number;
+        input_tokens: number;
+        output_tokens: number;
+      };
+      type: string
+    }
+  }
 };
 
 type UpdatedItemOption = CartItemOption & { status?: string };
@@ -46,7 +69,6 @@ const AudioChat: React.FC = () => {
   );
 
   const startTimeRef = useRef<string | null>(null);
-  const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
   const catalog = useCatalog();
   const cart = useCart();
   const { setLanguage } = useLanguage();
@@ -63,7 +85,6 @@ const AudioChat: React.FC = () => {
     }
 
     startTimeRef.current = new Date().toISOString();
-    setRealtimeEvents([]);
 
     // Start capturing audio from the microphone
     await wavRecorder.begin();
@@ -87,7 +108,8 @@ const AudioChat: React.FC = () => {
       instructions:
         '당신은 주문을 받는 점원입니다. ' +
         '사용자가 메뉴 설명을 원할 때는 옵션을 제외하고 설명하고, 사용자가 옵션 설명을 원할 때 옵션 설명을 하세요. ' +
-        '최신 상태를 위해 대답하기 전 툴을 사용하여 정보를 얻으세요. '
+        '최신 상태를 위해 대답하기 전 툴을 사용하여 정보를 얻으세요. ' +
+        'KRW, USD 등의 단위는 원, 달러 등으로 읽으세요. '
       ,
       turn_detection: {
         type: 'server_vad',
@@ -180,7 +202,11 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         cart.item.forEach((item) => {
-          result += `[${item.id}] ${item.quantity}x ${item.name} = ${item.subtotal ?? 0}KRW\n`;
+          result += `[${item.id}] ${item.quantity}x ${item.name} = ${item.price}KRW\n`;
+          item.options.forEach((option) => {
+            result += `+ ${option.quantity}x ${option.name} = ${option.price * option.quantity}KRW\n`
+          });
+          result += '\n';
         });
 
         console.log("Result:", result);
@@ -259,7 +285,7 @@ const AudioChat: React.FC = () => {
             addedItems.push({...menu, id: cartItemId, catalogid: menu.id, quantity: item.quantity, options, status: "success"});
           } catch (error) {
             console.error(`Failed to add ${item.name} to the cart:`, error);
-            addedItems.push({...menu, id: '', name: item.name, quantity: item.quantity, options, status: "unknown error"})
+            addedItems.push({...menu, id: '', name: item.name, quantity: item.quantity, options, status: "unknown error"});
           }
         });
 
@@ -452,13 +478,23 @@ const AudioChat: React.FC = () => {
         }
       }
     )
-  }, [cart, catalog, setLanguage]);
+  }, []);
 
   useEffect(() => {
     const client = clientRef.current;
     const wavStreamPlayer = wavStreamPlayerRef.current;
     
-    //client.on('error', (event) => console.error(event));
+    client.on('realtime.event', (event: RealtimeEvent) => {
+      const error = event.event.response.status_details.error;
+      if (error) {
+        switch (error.code) {
+          case 'rate_limit_exceeded':
+            console.error("Rate Limit Exceeded!!");
+            break;
+        }
+      }
+    });
+    client.on('error', (event: object) => console.error(event));
     client.on('conversation.interrupted', async () => {
       const trackSampleOffset = await wavStreamPlayer.interrupt();
       if (trackSampleOffset?.trackId) {
@@ -487,11 +523,6 @@ const AudioChat: React.FC = () => {
       <button onClick={connectConversation} disabled={clientRef.current.isConnected()}>
         {clientRef.current.isConnected() ? 'Connected' : 'Connect to Audio Chat'}
       </button>
-      <div>
-        {realtimeEvents.map((event, idx) => (
-          <p key={idx}>{event.content}</p>
-        ))}
-      </div>
     </div>
   );
 };
