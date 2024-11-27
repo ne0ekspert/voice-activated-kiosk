@@ -111,14 +111,11 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
 
       if (data.status === 'success') {
         timeout = setTimeout(() => {
+          cart.clearCart();
           router.replace('/');
         }, 10000);
 
-        setNfcStatus('success');
         sendOrder();
-
-        return () => {
-        };
       }
 
       setNfcStatus(data.status);
