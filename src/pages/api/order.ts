@@ -9,7 +9,7 @@ export type CheckoutJson = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const body: CheckoutJson = await req.body();
+  const body: CheckoutJson = req.body;
 
   let result = 'Order received:\n';
   let total = 0;

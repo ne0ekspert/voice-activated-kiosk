@@ -17,20 +17,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.write('data: ');
         res.write(JSON.stringify({ content: 'No tag detected', status: 'timeout' }));
         res.write('\n\n');
-        res.end();
     }, 30000);
 
-    let response = await fetch('http://127.0.0.1:5000/api/nfc');
-    do {
+    let success = false;
+    while (!success) {
+        const response = await fetch('http://127.0.0.1:5000/api/nfc');
+
         if (response.ok) {
+            const data = await response.text();
             res.write('event: msg\n');
             res.write('data: ')
-            res.write(JSON.stringify({ content: await response.text(), status: 'success'}));
+            res.write(JSON.stringify({ content: data, status: 'success'}));
             res.write('\n\n');
-            res.end();
-            return;
-        } else {
-            response = await fetch('http://127.0.0.1:5000/api/nfc');
+            success = true
         }
-    } while (response.ok);
+    }
 }

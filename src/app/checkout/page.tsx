@@ -114,6 +114,7 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
           router.replace('/');
         }, 10000);
 
+        setNfcStatus('success');
         sendOrder();
 
         return () => {
