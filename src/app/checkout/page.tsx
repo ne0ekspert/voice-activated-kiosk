@@ -55,12 +55,19 @@ function CashPaymentPopup({ takeout }: { takeout: boolean }) {
   }
 
   return (
-    <div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
-      <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5'>
-        <h1 className='text-3xl'>{t('payment.cash.title')}</h1>
-        <button onClick={endOrder}>Continue</button>
-      </div>
+<div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
+  <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5 flex flex-col justify-between'>
+    <h1 className='font-bold text-3xl text-center'>{t('payment.cash.title')}</h1>
+    <div className='flex justify-center items-center grow'>
+      <h2 className='text-5xl text-center'>
+        Pls pay at the <span className='text-lime-500 font-bold text-6xl'>counter</span>
+      </h2>
     </div>
+    <div className='flex justify-center mt-5'>
+      <button className='font-bold text-3xl' onClick={endOrder}>Continue</button>
+    </div>
+  </div>
+</div>
   )
 }
 function CardPaymentPopup({ takeout }: { takeout: boolean }) {
