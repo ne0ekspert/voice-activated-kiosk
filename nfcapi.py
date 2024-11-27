@@ -20,12 +20,12 @@ def poll_nfc():
     while True:
         with nfc_lock:  # Ensure that only one thread accesses the NFC reader
             if nfc_reader:
-                for target in nfc_reader.poll():
-                    try:
-                        # Update the current_tag with the detected NFC tag UID
-                        current_tag = target.uid.hex()
-                    except:
-                        continue
+                try:
+                    for target in nfc_reader.poll():
+                        current_tag = 'OwO'
+                        break
+                except:
+                    current_tag = 'OwO'
         time.sleep(0.5)
 
 @app.route('/api/nfc', methods=['GET'])
@@ -34,7 +34,6 @@ def get_nfc_data():
 
     with nfc_lock:  # Ensure thread-safe access to the shared NFC data
         if current_tag:
-            current_tag = 'OwO'
             response = {"message": current_tag}
             current_tag = None  # Reset the tag once it's read
             return jsonify(response)
@@ -48,4 +47,4 @@ def start_nfc_reader():
 
 if __name__ == '__main__':
     start_nfc_reader()
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)

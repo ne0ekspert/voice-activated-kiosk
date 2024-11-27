@@ -6,7 +6,10 @@
     },
     "item": {
         "select_addon": "옵션 추가",
-        "subtotal": "가격"
+        "subtotal": "가격",
+        "price": {
+            "unit": "원"
+        }
     },
     "cart": {
         "total": "합계",

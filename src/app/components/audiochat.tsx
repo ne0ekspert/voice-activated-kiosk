@@ -46,7 +46,6 @@ const AudioChat: React.FC = () => {
   );
 
   const startTimeRef = useRef<string | null>(null);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
   const catalog = useCatalog();
   const cart = useCart();
@@ -64,7 +63,6 @@ const AudioChat: React.FC = () => {
     }
 
     startTimeRef.current = new Date().toISOString();
-    setIsConnected(true);
     setRealtimeEvents([]);
 
     // Start capturing audio from the microphone
@@ -124,7 +122,7 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         catalog.forEach((menu) => {
-          result += `${menu.name}, $${menu.price}\n`;
+          result += `${menu.name}, ${menu.price}KRW\n`;
         });
 
         console.log(result);
@@ -156,7 +154,7 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         options.forEach((option) => {
-          result += `${option.name}, $${option.price}\n`;
+          result += `${option.name}, ${option.price}KRW\n`;
         });
 
         console.log("Result:", result);
@@ -182,7 +180,7 @@ const AudioChat: React.FC = () => {
         let result = "";
 
         cart.item.forEach((item) => {
-          result += `[${item.id}] ${item.quantity}x ${item.name} = $${item.subtotal ?? 0}\n`;
+          result += `[${item.id}] ${item.quantity}x ${item.name} = ${item.subtotal ?? 0}KRW\n`;
         });
 
         console.log("Result:", result);
@@ -486,8 +484,8 @@ const AudioChat: React.FC = () => {
 
   return (
     <div>
-      <button onClick={connectConversation} disabled={isConnected}>
-        {isConnected ? 'Connected' : 'Connect to Audio Chat'}
+      <button onClick={connectConversation} disabled={clientRef.current.isConnected()}>
+        {clientRef.current.isConnected() ? 'Connected' : 'Connect to Audio Chat'}
       </button>
       <div>
         {realtimeEvents.map((event, idx) => (

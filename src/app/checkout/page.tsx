@@ -44,8 +44,16 @@ function CashPaymentPopup({ takeout }: { takeout: boolean }) {
       console.log(data);
     };
 
+    const timeout = setTimeout(() => {
+      router.replace('/');
+    }, 10000);
+
     sendOrder();
-  }, []);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [ cart.item, router, takeout]);
 
   function endOrder(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -77,6 +85,7 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
   const router = useRouter();
 
   useEffect(() => {
+    let timeout: NodeJS.Timeout | null = null;
     const sendOrder = async () => {
       const payload: CheckoutJson = {
         items: cart.item,
@@ -101,13 +110,22 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
       const data: { content: string; status: string; } = JSON.parse(e.data);
 
       if (data.status === 'success') {
+        timeout = setTimeout(() => {
+          router.replace('/');
+        }, 10000);
+
         sendOrder();
+
+        return () => {
+        };
       }
 
       setNfcStatus(data.status);
     });
-
+    
     return () => {
+      if (timeout)
+        clearTimeout(timeout);
       eventSource.close();
     }
   }, [cart.item, takeout]);
@@ -191,7 +209,7 @@ export default function Checkout() {
             )}
           </div>
           <div>
-            <p className='text-3xl font-bold m-5'>{t('cart.total')}: ${cart.total}</p>
+            <p className='text-3xl font-bold m-5'>{t('cart.total')}: {cart.total}{t('item.price.unit')}</p>
           </div>
         </div>
         <div className='w-1/2'>
@@ -246,7 +264,7 @@ export default function Checkout() {
           </div>
         </div>
       </div>
-      {match(params.get('method'))
+      {match(params?.get('method'))
         .with('card', () => (
           <CardPaymentPopup takeout={takeout} />
         ))

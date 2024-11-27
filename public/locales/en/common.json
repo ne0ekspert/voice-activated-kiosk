@@ -6,7 +6,10 @@
     },
     "item": {
         "select_addon": "Select Add-on",
-        "subtotal": "Subtotal"
+        "subtotal": "Subtotal",
+        "price": {
+            "unit": "won"
+        }
     },
     "cart": {
         "total": "Total",

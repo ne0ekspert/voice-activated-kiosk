@@ -68,7 +68,7 @@ export function CartItemComponent({ item }: { item: CartItem }) {
               <button onClick={increase}
                       className='border border-gray-500 aspect-square h-8 rounded-full'> + </button>
             </div>
-            <span className='w-20 text-right'>${item.price * item.quantity}</span>
+            <span className='w-20 text-right'>{item.price * item.quantity}{t('item.price.unit')}</span>
           </span>
           <ul>
             {item.options.map((option) => (
@@ -102,7 +102,7 @@ export function CartItemComponent({ item }: { item: CartItem }) {
         </div>
       </div>
       <div className='flex justify-between items-center'>
-        <span className='text-2xl pl-3'>{t('item.subtotal')}: ${item.subtotal ?? 0}</span>
+        <span className='text-2xl pl-3'>{t('item.subtotal')}: {item.subtotal ?? 0}{t('item.price.unit')}</span>
         <button onClick={() => cart.removeItemFromCart(item)}
                 className='remove-button rounded-full pl-5 pr-5 pt-2 pb-2'>{t('cart.remove')}</button>
       </div>
