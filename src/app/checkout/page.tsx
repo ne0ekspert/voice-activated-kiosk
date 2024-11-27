@@ -121,31 +121,33 @@ function CardPaymentPopup({ takeout }: { takeout: boolean }) {
 
   return (
     <div className='absolute flex justify-center items-center top-0 w-screen h-screen bg-black bg-opacity-65'>
-      <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5'>
-        <h1 className='text-3xl'>{t('payment.card.title')}</h1>
+      <div className='w-2/3 h-2/3 bg-white rounded-2xl p-5 flex flex-col justify-between'>
+        <h1 className='font-bold text-4xl text-center'>{t('payment.card.title')}</h1>
         {match(nfcStatus)
           .with('success', () => (
-            <div>
-              <span>{t('payment.card.success')}</span>
+            <div className='flex justify-center items-center'>
+              <span className='font-bold text-4xl'>{t('payment.card.success')}</span>
             </div>
           ))
           .with('timeout', () => (
-            <div>
-              <span>{t('payment.card.timeout')}</span>
+            <div className='flex justify-center items-center'>
+              <span className='text-red-500 font-bold text-5xl'>{t('payment.card.timeout')}</span>
             </div>
           ))
           .with('error', () => (
-            <div>
+            <div className='flex justify-center items-center'>
               <span>{t('payment.card.error')}</span>
             </div>
           ))
           .otherwise(() => (
-            <div>
-              <span>{t('payment.card.scan')}</span>
+            <div className='flex justify-center items-center w-full'>
+              <span className='text-lime-500 font-bold text-5xl text-center'>{t('payment.card.scan')}</span> {/* Increased font size */}
             </div>
           ))
         }
-        <button onClick={endOrder}>Continue</button>
+        <div className='flex justify-center mt-5'>
+          <button className='font-bold text-3xl' onClick={endOrder}>Continue</button>
+        </div>
       </div>
     </div>
   );
