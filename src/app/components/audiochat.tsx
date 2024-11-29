@@ -216,6 +216,26 @@ const AudioChat: React.FC = () => {
       }
     );
 
+    // 직원 호출 툴
+    client.addTool(
+      {
+        name: 'call_manager',
+        description: 'Call manager',
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: [],
+        }
+      },
+      () => {
+        console.log("Function calling: call_manager");
+
+        fetch('/api/call');
+
+        return "Successfully called manager";
+      }
+    )
+
     // 메뉴 추가 툴
     client.addTool(
       {
