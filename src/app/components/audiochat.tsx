@@ -12,33 +12,6 @@ import { useCatalog } from '../context/catalogContext';
 import { useLanguage } from '../context/languageContext';
 import { useRouter } from 'next/navigation';
 
-type RealtimeEvent = {
-  time: `${number}-${number}-${number}T${number}:${number}:${number}.${number}Z`;
-  source: 'server' | 'client';
-  event: {
-    event_id: string;
-    response: {
-      id: string;
-      object: string;
-      output: [];
-      status: string;
-      status_details: {
-        error?: {
-          code: string;
-          message: string;
-          type: string
-        }
-      };
-      usage: {
-        total_tokens: number;
-        input_tokens: number;
-        output_tokens: number;
-      };
-      type: string
-    }
-  }
-};
-
 type UpdatedItemOption = CartItemOption & { status?: string };
 
 type UpdatedItems = {
@@ -499,22 +472,13 @@ const AudioChat: React.FC = () => {
         }
       }
     )
-  }, []);
+  }, [cart, catalog, router, setLanguage]);
 
   useEffect(() => {
     const client = clientRef.current;
     const wavStreamPlayer = wavStreamPlayerRef.current;
     
-    client.on('realtime.event', (event: RealtimeEvent) => {
-      const error = event.event.response.status_details.error;
-      if (error) {
-        switch (error.code) {
-          case 'rate_limit_exceeded':
-            console.error("Rate Limit Exceeded!!");
-            break;
-        }
-      }
-    });
+    //client.on('realtime.event', (event: RealtimeEvent) => {});
     client.on('error', (event: object) => console.error(event));
     client.on('conversation.interrupted', async () => {
       const trackSampleOffset = await wavStreamPlayer.interrupt();
