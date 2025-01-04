@@ -5,7 +5,7 @@ Graduation work of Busan Mechanical Technical High School project class
 ## Overview
 
 Voice Recognition Kiosk is a kiosk system that allows users to **add or delete food items to their order** using only their voice and implements a payment system utilizing NFC.
-It supports users to order and pay for food conveniently by using a screen implemented with React.js and Python and ChatGPT based **speech recognition and generative AI answer generation technology**.
+It supports users to order and pay for food conveniently by using a **speech recognition and generative AI answer generation technology**.
 
 ## Features
 
@@ -15,17 +15,17 @@ It supports users to order and pay for food conveniently by using a screen imple
 
 ## Technology stack
 
-* Frontend: React.js
-* Backend: Python, ChatGPT
+* Frontend, Backend: Next.js, OpenAI API
 * Hardware: Raspberry Pi 5, Sunfounder 10.1” touchscreen
 * Other: PN532 NFC reader (I2C)
 
 ## Install and run
 
 1. Clone the project. `git clone --recursive https://github.com/ne0ekspert/voice-activated-kiosk.git`
-2. Install the required libraries. pip install -r requirements.txt`
-3. Run the server with the command `python main.py`.
-4. navigate to the address `http://localhost:8080` in your web browser.
+2. Install the required libraries. `npm install`
+3. Build the app with the command `npm run build`.
+4. Run the server with the command `npm start`.
+5. navigate to the address `http://localhost:3000` in your web browser.
 
 ## How to use
 
